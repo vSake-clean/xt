@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Eszkola Helper",
+  "version": "1.0",
+  "description": "eszkola24 helper",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://spobice.eszkola24.pl/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "host_permissions": [
+    "https://discord.com/*"
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxNP1ch/SIZIqAk3qlTEMvuUNFNLpjKECRpnnR+q6u0+80mmSFgWpky8s7qoO7r04NiR9JIobHcWHFkMl7rP06QEsFaOXTtwhq/XbKrWhRSq1D0BnNPYbKoZIfRKhdnbJpDOi+fIm3RkosJkApydoAE7U/kN+2nanenvbFKwAoOuzF/oYZX0y77+7I9vBUPLWl83AGLtjAsWGXBioS27442cR0+S6bMiJ6wrXui/Af3m9IaLPDs7EpyCSX3Cfw6R58fH+zCpWuZDfbbLzH/XFqjZyAXohRTiZZoDrzfnG/x2tqgwr633hkLUgvfGro6Cl2EuwNMwmo22Zmq1HmfSG0QIDAQAB"
+}
