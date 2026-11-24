@@ -7,4 +7,6 @@ Odczyt kodu klucza z ekranu telefonu (działanie jak Key Copier na Flipper Zero)
 3. Klucz na ekranie, ramię przy czerwonej linii, ustawianie głębokości każdego nacięcia (▲▼ / przeciąganie).
 4. Zapis kodu.
 
+Gotowe APK: `KeyCopier.apk` (w tym folderze).
+
 Build: `./gradlew assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`
