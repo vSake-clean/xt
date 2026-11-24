@@ -1,0 +1,1 @@
+Przed dodaniem nowej aplikacji przeczytaj README.md: każda aplikacja to osobny folder w katalogu głównym, nazwany jak aplikacja, z całym kodem i gotową paczką w środku. Dopisz ją do tabeli w README. Nie dodawaj Claude jako współautora commitów.
