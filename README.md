@@ -16,8 +16,3 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
-| [`eszkola-ext/`](eszkola-ext/) | eSzkoła: rozszerzenie przeglądarki | Chrome / Firefox | `eszkola.crx`, `eszkola.xpi` (w katalogu głównym, patrz niżej) |
-
-### Wyjątek: eSzkoła
-
-Pliki `eszkola.crx`, `eszkola.xpi` i `eszkola_update.xml` muszą zostać w katalogu głównym. Zainstalowane rozszerzenie pobiera aktualizacje z adresu `https://cdn.jsdelivr.net/gh/vSake-clean/xt@main/eszkola.crx`, więc przeniesienie ich zepsułoby aktualizacje. Nowe aplikacje tego wyjątku nie powielają.
