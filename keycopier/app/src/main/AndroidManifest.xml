@@ -14,6 +14,9 @@
         </activity>
         <activity android:name=".KeyActivity" android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+        <activity android:name=".ModelActivity" />
+        <provider android:name=".FilesProvider" android:authorities="com.vsake.keycopier.files"
+            android:exported="false" android:grantUriPermissions="true" />
         <activity android:name=".CalibrationActivity" android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden" />
     </application>

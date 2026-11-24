@@ -97,7 +97,7 @@ public class Store {
     public static String codeString(Profile p, int[] code) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < code.length; i++) {
-            if (i > 0) sb.append(' ');
+            if (i > 0) sb.append(i == p.pins ? "  |  " : " ");
             sb.append(p.label(code[i]));
         }
         return sb.toString();

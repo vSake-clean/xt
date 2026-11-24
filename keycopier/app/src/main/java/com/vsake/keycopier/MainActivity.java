@@ -62,7 +62,8 @@ public class MainActivity extends Activity {
         List<Profile> custom = Store.customProfiles(this);
         for (int i = 0; i < custom.size(); i++) addProfile(custom.get(i), i);
         list.addView(Ui.button(this, "＋ Nowy własny profil", v -> editProfile(null, -1)), lp());
-        TextView tip = text("Przytrzymaj profil, aby edytować jego kopię (wymiary w mm).", 12);
+        list.addView(Ui.button(this, "📥 Importuj profil (wklej JSON)", v -> importProfile()), lp());
+        TextView tip = text("Przytrzymaj profil: edycja kopii / udostępnienie. Profile „ogólne” mają przybliżone wymiary – dopasuj do swojego klucza.", 12);
         tip.setTextColor(0xFF777777);
         list.addView(tip);
 
@@ -95,7 +96,10 @@ public class MainActivity extends Activity {
                 + "3. Połóż klucz na ekranie nacięciami do góry, ramieniem (ogranicznikiem) dokładnie przy czerwonej linii.\n"
                 + "4. Dla każdego pinu ustaw głębokość (▲▼ lub przeciągnij palcem po ostrzu), aż obrys pokryje się z kluczem.\n"
                 + "5. Odczytany kod zapisz 💾.\n"
-                + "⇄ / ⇅ – odbicie, jeśli klucz leży w drugą stronę.", 14));
+                + "⇄ / ⇅ – odbicie, jeśli klucz leży w drugą stronę.\n"
+                + "📷 – zdjęcie klucza pod obrysem: dopasuj palcami (✋), potem ✨ Auto odczyta nacięcia.\n"
+                + "📤 – eksport: model 3D (STL), PDF 1:1 do druku, SVG, tekst.\n"
+                + "Klucze dwustronne: ⇵ przełącza krawędź (kod: góra | dół).", 14));
     }
 
     private void addProfile(Profile p, int customIdx) {
@@ -103,10 +107,17 @@ public class MainActivity extends Activity {
                 v -> startActivity(KeyActivity.intent(this, p, null, false, false, -1, null)));
         b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         b.setOnLongClickListener(v -> {
-            if (customIdx < 0) { editProfile(p.copy(), -1); return true; }
+            if (customIdx < 0) {
+                new AlertDialog.Builder(this).setTitle(p.name)
+                        .setItems(new String[]{"Edytuj kopię", "Udostępnij profil (JSON)"}, (d, w) -> {
+                            if (w == 0) editProfile(p.copy(), -1); else shareProfile(p);
+                        }).show();
+                return true;
+            }
             new AlertDialog.Builder(this).setTitle(p.name)
-                    .setItems(new String[]{"Edytuj", "Usuń"}, (d, w) -> {
+                    .setItems(new String[]{"Edytuj", "Udostępnij profil (JSON)", "Usuń"}, (d, w) -> {
                         if (w == 0) editProfile(p, customIdx);
+                        else if (w == 1) shareProfile(p);
                         else {
                             List<Profile> l = Store.customProfiles(this);
                             l.remove(customIdx);
@@ -143,6 +154,9 @@ public class MainActivity extends Activity {
         EditText ang = field(form, "Kąt nacięcia [°]", fmt(p.cutAngle), true);
         EditText flat = field(form, "Szerokość dna nacięcia [mm]", fmt(p.flat), true);
         EditText macs = field(form, "MACS (0 = brak)", String.valueOf(p.macs), true);
+        EditText ds = field(form, "Dwustronny (0 = nie, 1 = tak)", p.doubleSided ? "1" : "0", true);
+        EditText thick = field(form, "Grubość ostrza – model 3D [mm]", fmt(p.thickness), true);
+        EditText gr = field(form, "Rowki – model 3D (F/B:wysokość:szer:głęb; …)", p.grooves, false);
         ScrollView sv = new ScrollView(this);
         sv.addView(form);
         new AlertDialog.Builder(this)
@@ -160,6 +174,9 @@ public class MainActivity extends Activity {
                         p.labelStart = Integer.parseInt(ls.getText().toString().trim());
                         p.cutAngle = num(ang); p.flat = num(flat);
                         p.macs = Integer.parseInt(macs.getText().toString().trim());
+                        p.doubleSided = "1".equals(ds.getText().toString().trim());
+                        p.thickness = num(thick);
+                        p.grooves = gr.getText().toString().trim();
                         p.builtIn = false;
                         List<Profile> l = Store.customProfiles(this);
                         if (customIdx >= 0 && customIdx < l.size()) l.set(customIdx, p); else l.add(p);
@@ -171,6 +188,43 @@ public class MainActivity extends Activity {
                 })
                 .setNegativeButton("Anuluj", null)
                 .show();
+    }
+
+    private void shareProfile(Profile p) {
+        try {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("text/plain");
+            i.putExtra(Intent.EXTRA_TEXT, p.toJson().toString());
+            startActivity(Intent.createChooser(i, "Udostępnij profil"));
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void importProfile() {
+        EditText e = new EditText(this);
+        e.setHint("{\"id\":…}");
+        e.setMinLines(4);
+        android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0) {
+            CharSequence t = cm.getPrimaryClip().getItemAt(0).coerceToText(this);
+            if (t != null && t.toString().trim().startsWith("{")) e.setText(t);
+        }
+        new AlertDialog.Builder(this).setTitle("Importuj profil").setView(e)
+                .setPositiveButton("Importuj", (d, w) -> {
+                    try {
+                        Profile p = Profile.fromJson(new org.json.JSONObject(e.getText().toString().trim()));
+                        p.id = "custom" + System.currentTimeMillis();
+                        p.builtIn = false;
+                        List<Profile> l = Store.customProfiles(this);
+                        l.add(p);
+                        Store.saveCustomProfiles(this, l);
+                        build();
+                        Toast.makeText(this, "Zaimportowano: " + p.name, Toast.LENGTH_SHORT).show();
+                    } catch (Exception ex) {
+                        Toast.makeText(this, "Niepoprawny JSON: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }).setNegativeButton("Anuluj", null).show();
     }
 
     private static int clamp(int v, int a, int b) { return Math.max(a, Math.min(b, v)); }

@@ -15,4 +15,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
-| [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
+| [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) + modele 3D (STL), PDF, SVG | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |

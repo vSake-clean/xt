@@ -24,6 +24,9 @@ public class Profile {
     public double flat;          // width of the flat at the cut root
     public double tipLength;     // last cut centre -> tip
     public int macs;             // max adjacent cut spec, 0 = none
+    public boolean doubleSided;  // cuts on both edges (bottom edge has its own code)
+    public double thickness = 2.2; // blade thickness for the 3D model
+    public String grooves = "";  // keyway grooves for 3D: "F:y:width:depth;B:y:width:depth" (F=front, B=back)
     public boolean builtIn;
 
     private static final double IN = 25.4;
@@ -33,6 +36,11 @@ public class Profile {
     public double cutCenter(int pin) { return firstCut + spacing * pin; }
 
     public double tipX() { return cutCenter(pins - 1) + tipLength; }
+
+    /** Number of code entries: pins for single-sided keys, 2*pins for double-sided (top then bottom). */
+    public int codeLen() { return doubleSided ? pins * 2 : pins; }
+
+    public int deepest() { return depthStep >= 0 ? depthCount - 1 : 0; }
 
     public String label(int idx) { return String.valueOf(labelStart + idx); }
 
@@ -47,6 +55,7 @@ public class Profile {
         o.put("sp", spacing); o.put("root0", root0); o.put("step", depthStep);
         o.put("n", depthCount); o.put("ls", labelStart); o.put("ang", cutAngle);
         o.put("flat", flat); o.put("tip", tipLength); o.put("macs", macs);
+        o.put("ds", doubleSided); o.put("t", thickness); o.put("gr", grooves);
         return o;
     }
 
@@ -57,6 +66,8 @@ public class Profile {
         p.spacing = o.getDouble("sp"); p.root0 = o.getDouble("root0"); p.depthStep = o.getDouble("step");
         p.depthCount = o.getInt("n"); p.labelStart = o.optInt("ls", 0); p.cutAngle = o.optDouble("ang", 90);
         p.flat = o.optDouble("flat", 0.8); p.tipLength = o.optDouble("tip", 5); p.macs = o.optInt("macs", 0);
+        p.doubleSided = o.optBoolean("ds", false); p.thickness = o.optDouble("t", 2.2);
+        p.grooves = o.optString("gr", "");
         return p;
     }
 
@@ -67,6 +78,7 @@ public class Profile {
         p.bladeHeight = h * IN; p.firstCut = first * IN; p.spacing = sp * IN;
         p.root0 = root0 * IN; p.depthStep = inc * IN; p.depthCount = n; p.labelStart = ls;
         p.cutAngle = ang; p.flat = flat * IN; p.tipLength = 0.22 * IN; p.macs = macs; p.builtIn = true;
+        p.thickness = 0.080 * IN;
         return p;
     }
 
@@ -76,15 +88,24 @@ public class Profile {
         p.id = id; p.name = name; p.shortName = sn; p.pins = pins;
         p.bladeHeight = h; p.firstCut = first; p.spacing = sp; p.root0 = root0; p.depthStep = step;
         p.depthCount = n; p.labelStart = ls; p.cutAngle = ang; p.flat = flat; p.tipLength = tip;
-        p.macs = macs; p.builtIn = true;
+        p.macs = macs; p.builtIn = true; p.thickness = 2.3;
+        p.grooves = EURO_GROOVES;
         return p;
     }
+
+    /** Generic euro keyway grooves (approximate, for the 3D model only). */
+    public static final String EURO_GROOVES = "F:2.4:1.0:0.6;B:4.3:1.1:0.6;F:6.2:0.9:0.5";
 
     public static List<Profile> builtIns() {
         List<Profile> l = new ArrayList<>();
         // European profile cylinder keys – generic values, adjust with "Edytuj kopię" if your key differs.
         l.add(mm("euro5", "Europrofil 5 pin (ogólny)", "EURO5", 5, 8.6, 4.0, 4.0, 8.0, 0.5, 8, 0, 90, 0.8, 5.0, 0));
         l.add(mm("euro6", "Europrofil 6 pin (ogólny)", "EURO6", 6, 8.6, 4.0, 4.0, 8.0, 0.5, 8, 0, 90, 0.8, 5.0, 0));
+        l.add(mm("euro7", "Europrofil 7 pin (ogólny)", "EURO7", 7, 8.6, 4.0, 4.0, 8.0, 0.5, 8, 0, 90, 0.8, 5.0, 0));
+        Profile ds = mm("euro6ds", "Europrofil 6 pin dwustronny (ogólny)", "EURO6-DS", 6, 9.0, 4.0, 4.0, 8.6, 0.45, 6, 0, 90, 0.8, 5.0, 0);
+        ds.doubleSided = true;
+        ds.grooves = "F:3.2:1.0:0.6;B:5.8:1.0:0.6";
+        l.add(ds);
         l.add(inch("kw1", "Kwikset KW1 (5 pin)", "KW1", 5, .335, .247, .150, .329, .023, 7, 1, 90, .084, 4));
         l.add(inch("kw10", "Kwikset KW10 (6 pin)", "KW10", 6, .335, .247, .150, .329, .023, 7, 1, 90, .084, 4));
         l.add(inch("sc1", "Schlage SC1 (5 pin)", "SC1", 5, .343, .231, .156, .335, .015, 10, 0, 100, .031, 7));

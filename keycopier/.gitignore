@@ -2,3 +2,5 @@
 build/
 app/build/
 local.properties
+signing.properties
+*.jks
