@@ -37,7 +37,7 @@ public class KeyActivity extends BaseActivity {
 
     private KeyView keyView;
     private ScrollView panelScroll;
-    private Button photoMoveBtn, autoBtn;
+    private Button modeBtn, autoBtn;
     private Profile profile;
     private int savedIndex = -1;
     private String savedName;
@@ -89,13 +89,15 @@ public class KeyActivity extends BaseActivity {
         panel.addView(row(Ui.button(this, "⇄", v -> { keyView.setMirror(!keyView.isMirrorH(), keyView.isMirrorV()); placePanel(); }),
                 Ui.button(this, "⇅", v -> keyView.setMirror(keyView.isMirrorH(), !keyView.isMirrorV()))), lp());
         panel.addView(row(Ui.button(this, "📷", v -> photoMenu()), Ui.button(this, "Zeruj", v -> keyView.resetCode())), lp());
-        photoMoveBtn = Ui.button(this, "✋", v -> { keyView.setPhotoMove(!keyView.isPhotoMove()); updatePhotoButtons(); });
+        modeBtn = Ui.button(this, "✋", v -> { keyView.cycleMode(); updatePhotoButtons(); });
+        panel.addView(row(modeBtn, Ui.button(this, "1:1", v -> { keyView.resetView(); updatePhotoButtons(); })), lp());
         autoBtn = Ui.button(this, "✨ Auto", v -> {
-            keyView.setPhotoMove(false);
+            if (keyView.getMode() == KeyView.MODE_PHOTO) keyView.setMode(KeyView.MODE_KEY);
             updatePhotoButtons();
             if (keyView.autoDetect()) Toast.makeText(this, "Odczytano – sprawdź i popraw ręcznie", Toast.LENGTH_SHORT).show();
         });
-        panel.addView(row(photoMoveBtn, autoBtn), lp());
+        LinearLayout.LayoutParams alp = lp();
+        panel.addView(autoBtn, alp);
         panel.addView(Ui.button(this, "⚙ Ustawienia", v -> Settings.show(this, () -> {
             keyView.reloadSettings();
             Ui.immersive(this);
@@ -112,8 +114,9 @@ public class KeyActivity extends BaseActivity {
 
     private void updatePhotoButtons() {
         int vis = keyView.hasPhoto() ? View.VISIBLE : View.GONE;
-        ((View) photoMoveBtn.getParent()).setVisibility(vis);
-        photoMoveBtn.setText(keyView.isPhotoMove() ? "✋ Zdjęcie" : "✋ Klucz");
+        autoBtn.setVisibility(vis);
+        int m = keyView.getMode();
+        modeBtn.setText(m == KeyView.MODE_PHOTO ? "✋ Zdjęcie" : m == KeyView.MODE_VIEW ? "🔍 Widok" : "✋ Klucz");
     }
 
     @Override

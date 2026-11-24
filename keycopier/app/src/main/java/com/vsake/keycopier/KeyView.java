@@ -34,7 +34,11 @@ public class KeyView extends View {
 
     private Bitmap photo;
     private final Matrix photoM = new Matrix();
-    private boolean photoMove;
+    /** Touch modes: edit the key, move the photo, or pan/zoom the whole view. */
+    public static final int MODE_KEY = 0, MODE_PHOTO = 1, MODE_VIEW = 2;
+    private int mode = MODE_KEY;
+    private final Matrix viewM = new Matrix();
+    private final Matrix viewInv = new Matrix();
     private final Paint photoPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
 
     private boolean touching;
@@ -109,13 +113,37 @@ public class KeyView extends View {
             photoM.postScale(s, s);
             photoM.postTranslate((getWidth() - b.getWidth() * s) / 2f, (getHeight() - b.getHeight() * s) / 2f);
         }
-        photoMove = b != null;
+        mode = b != null ? MODE_PHOTO : (mode == MODE_PHOTO ? MODE_KEY : mode);
+        lastCount = 0;
         invalidate();
     }
 
     public boolean hasPhoto() { return photo != null; }
-    public boolean isPhotoMove() { return photoMove; }
-    public void setPhotoMove(boolean m) { photoMove = m && photo != null; invalidate(); }
+    public int getMode() { return mode; }
+
+    public void setMode(int m) {
+        if (m == MODE_PHOTO && photo == null) m = MODE_KEY;
+        mode = m;
+        lastCount = 0;
+        invalidate();
+    }
+
+    /** Key -> (Photo) -> View -> Key. */
+    public void cycleMode() {
+        if (mode == MODE_KEY) setMode(photo != null ? MODE_PHOTO : MODE_VIEW);
+        else if (mode == MODE_PHOTO) setMode(MODE_VIEW);
+        else setMode(MODE_KEY);
+    }
+
+    public boolean isZoomed() { return !viewM.isIdentity(); }
+
+    public void resetView() { viewM.reset(); invalidate(); }
+
+    private float viewScale() {
+        float[] v = new float[9];
+        viewM.getValues(v);
+        return (float) Math.hypot(v[Matrix.MSCALE_X], v[Matrix.MSKEW_Y]);
+    }
 
     // ---------------- editing ----------------
     public void select(int delta) {
@@ -179,6 +207,8 @@ public class KeyView extends View {
 
     private void drawScene(Canvas c, boolean hud) {
         c.drawPaint(bg);
+        c.save();
+        c.concat(viewM);
         if (photo != null) c.drawBitmap(photo, photoM, photoPaint);
         double H = p.bladeHeight;
 
@@ -205,7 +235,7 @@ public class KeyView extends View {
             c.drawLine(sx(1), sy(H * 0.33), sx(tip - 3), sy(H * 0.33), thin);
             c.drawLine(sx(1), sy(H * 0.55), sx(tip - 4), sy(H * 0.55), thin);
         }
-        c.drawLine(sx(0), 0, sx(0), getHeight(), shoulder);
+        c.drawLine(sx(0), -10 * getHeight(), sx(0), 11 * getHeight(), shoulder);
 
         // pin lines, labels and depth ladder
         float textSize = Math.max(28f, 3.2f * pxmm);
@@ -242,13 +272,14 @@ public class KeyView extends View {
         cur.setStrokeWidth(3f);
         float cy = sy(bottomSel ? H - p.root(code[selected]) : p.root(code[selected]));
         c.drawLine(selX - tick * 1.4f, cy, selX + tick * 1.4f, cy, cur);
+        c.restore();
 
         if (!hud) return;
         Paint hdr = new Paint(text);
         hdr.setTextAlign(Paint.Align.LEFT);
         hdr.setFakeBoldText(false);
         hdr.setTextSize(Math.max(26f, 2.6f * pxmm));
-        float hx = mirrorH ? getWidth() * 0.45f : Math.max(24, sx(-26));
+        float hx = mirrorH ? getWidth() * 0.45f : Math.max(24, isZoomed() ? 24 : sx(-26));
         float hy = hdr.getTextSize() + 16;
         String codeTxt = Store.codeString(p, code);
         c.drawText(p.shortName + "   " + codeTxt, hx, hy, hdr);
@@ -260,7 +291,13 @@ public class KeyView extends View {
         Paint hint = new Paint(hdr);
         hint.setTextSize(hdr.getTextSize() * 0.6f);
         hint.setColor(0xAA000000);
-        String h = photoMove ? "Tryb zdjęcia: przesuń / powiększ / obróć dwoma palcami, dopasuj do obrysu"
+        if (isZoomed()) {
+            warn.setTextSize(hdr.getTextSize() * 0.8f);
+            c.drawText(String.format(java.util.Locale.US, "🔍 x%.1f – widok powiększony (to nie jest skala 1:1)", viewScale()),
+                    hx, hy * (w != null ? 3 : 2), warn);
+        }
+        String h = mode == MODE_PHOTO ? "Tryb zdjęcia: przesuń / powiększ / obróć dwoma palcami, dopasuj do obrysu"
+                : mode == MODE_VIEW ? "Tryb widoku: przesuwaj i przybliżaj cały obszar dwoma palcami"
                 : "Oprzyj ramię klucza o czerwoną linię" + (p.doubleSided ? "  ·  ⇵ zmienia krawędź" : "");
         if (optHints) c.drawText(h, hx, getHeight() - 16, hint);
     }
@@ -316,34 +353,42 @@ public class KeyView extends View {
             for (int i = 0; i < p.pins; i++) {
                 double xc = p.cutCenter(i);
                 double lo, hi;
-                if (e == 0) { lo = rMin - 0.6; hi = H + 1.0; }
-                else { lo = -1.0; hi = H - rMin + 0.6; }
+                if (e == 0) { lo = rMin - 0.6; hi = H + 1.5; }
+                else { lo = -1.5; hi = H - rMin + 0.6; }
+                // Sample average colour across the cut at each height, scanning from outside the blade inward.
                 int steps = (int) ((hi - lo) / 0.05);
-                double[] lum = new double[steps + 1];
+                double[][] col = new double[steps + 1][];
                 for (int k = 0; k <= steps; k++) {
-                    double y = lo + k * 0.05, sum = 0;
-                    int cnt = 0;
-                    for (int dx = -2; dx <= 2; dx++) {
-                        double x = xc + dx * Math.max(0.05, p.flat * 0.12);
-                        float[] pt = {sx(x), sy(y)};
-                        inv.mapPoints(pt);
-                        int px = (int) pt[0], py = (int) pt[1];
-                        if (px < 0 || py < 0 || px >= photo.getWidth() || py >= photo.getHeight()) continue;
-                        int col = photo.getPixel(px, py);
-                        sum += 0.299 * Color.red(col) + 0.587 * Color.green(col) + 0.114 * Color.blue(col);
-                        cnt++;
+                    double y = e == 0 ? hi - k * 0.05 : lo + k * 0.05;
+                    col[k] = sample(inv, xc, y);
+                }
+                // background reference = first 0.4 mm (outside the key)
+                double[] ref = new double[3];
+                int rc = 0;
+                for (int k = 0; k < 8 && k <= steps; k++) {
+                    if (col[k] == null) continue;
+                    for (int q = 0; q < 3; q++) ref[q] += col[k][q];
+                    rc++;
+                }
+                if (rc == 0) continue;
+                for (int q = 0; q < 3; q++) ref[q] /= rc;
+                double[] dist = new double[steps + 1];
+                double maxD = 0;
+                for (int k = 0; k <= steps; k++) {
+                    if (col[k] == null) { dist[k] = 0; continue; }
+                    dist[k] = Math.sqrt(sq(col[k][0] - ref[0]) + sq(col[k][1] - ref[1]) + sq(col[k][2] - ref[2]));
+                    maxD = Math.max(maxD, dist[k]);
+                }
+                if (maxD < 30) continue; // no contrast – leave as is
+                double thr = Math.max(25, maxD * 0.45);
+                double bestY = Double.NaN;
+                for (int k = 8; k + 2 <= steps; k++) {
+                    if (dist[k] > thr && dist[k + 1] > thr && dist[k + 2] > thr) {
+                        bestY = e == 0 ? hi - k * 0.05 : lo + k * 0.05;
+                        break;
                     }
-                    lum[k] = cnt > 0 ? sum / cnt : Double.NaN;
                 }
-                int gap = 3; // 0.15 mm
-                double best = -1, bestY = Double.NaN;
-                for (int k = gap; k + gap <= steps; k++) {
-                    double a = lum[k - gap], b = lum[k + gap];
-                    if (Double.isNaN(a) || Double.isNaN(b)) continue;
-                    double g = Math.abs(b - a);
-                    if (g > best) { best = g; bestY = lo + k * 0.05; }
-                }
-                if (Double.isNaN(bestY) || best < 12) continue;
+                if (Double.isNaN(bestY)) continue;
                 int bestIdx = 0;
                 double bd = Double.MAX_VALUE;
                 for (int d = 0; d < p.depthCount; d++) {
@@ -357,6 +402,29 @@ public class KeyView extends View {
         return true;
     }
 
+    private static double sq(double v) { return v * v; }
+
+    /** Average RGB of a small patch around (x mm, y mm) in the photo, or null if outside. */
+    private double[] sample(Matrix inv, double xc, double y) {
+        double[] sum = new double[3];
+        int cnt = 0;
+        double w = Math.max(0.15, p.flat * 0.25);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                float[] pt = {sx(xc + dx * w / 2), sy(y + dy * 0.03)};
+                inv.mapPoints(pt);
+                int px = (int) pt[0], py = (int) pt[1];
+                if (px < 0 || py < 0 || px >= photo.getWidth() || py >= photo.getHeight()) continue;
+                int c = photo.getPixel(px, py);
+                sum[0] += Color.red(c); sum[1] += Color.green(c); sum[2] += Color.blue(c);
+                cnt++;
+            }
+        }
+        if (cnt == 0) return null;
+        for (int q = 0; q < 3; q++) sum[q] /= cnt;
+        return sum;
+    }
+
     // ---------------- touch ----------------
     @Override
     public boolean onTouchEvent(MotionEvent e) {
@@ -367,11 +435,15 @@ public class KeyView extends View {
             touching = false; lastCount = 0; invalidate(); return true;
         }
         touching = true;
-        if (photoMove) { handlePhotoGesture(e); invalidate(); return true; }
+        if (mode == MODE_PHOTO) { handleGesture(e, photoM, true, true); invalidate(); return true; }
+        if (mode == MODE_VIEW) { handleGesture(e, viewM, false, false); invalidate(); return true; }
         if (a != MotionEvent.ACTION_DOWN && a != MotionEvent.ACTION_MOVE) return true;
         if (!optTouchDepth && !optTouchPin) { invalidate(); return true; } // touch editing disabled
         layoutKey();
-        double x = mmX(e.getX()), y = mmY(e.getY());
+        float[] sp = {e.getX(), e.getY()};
+        viewM.invert(viewInv);
+        viewInv.mapPoints(sp); // screen -> scene (undo view zoom)
+        double x = mmX(sp[0]), y = mmY(sp[1]);
         invalidate();
         if (x < p.firstCut - p.spacing || x > p.tipX() + 2) return true;
         int pin = (int) Math.round((x - p.firstCut) / p.spacing);
@@ -399,25 +471,35 @@ public class KeyView extends View {
         return true;
     }
 
-    private void handlePhotoGesture(MotionEvent e) {
+    /**
+     * One finger moves, two fingers zoom (and rotate if allowed) the target matrix.
+     * sceneSpace: the target lives under the view transform (the photo), so touch points are un-zoomed first.
+     */
+    private void handleGesture(MotionEvent e, Matrix target, boolean sceneSpace, boolean allowRotate) {
         int cnt = Math.min(2, e.getPointerCount());
-        float x0 = e.getX(0), y0 = e.getY(0);
-        float x1 = cnt > 1 ? e.getX(1) : 0, y1 = cnt > 1 ? e.getY(1) : 0;
+        float[] pt = {e.getX(0), e.getY(0), cnt > 1 ? e.getX(1) : 0, cnt > 1 ? e.getY(1) : 0};
+        if (sceneSpace) { viewM.invert(viewInv); viewInv.mapPoints(pt); }
+        float x0 = pt[0], y0 = pt[1], x1 = pt[2], y1 = pt[3];
         int a = e.getActionMasked();
         if (cnt == lastCount && a == MotionEvent.ACTION_MOVE) {
             if (cnt == 1) {
-                photoM.postTranslate(x0 - lastX0, y0 - lastY0);
+                target.postTranslate(x0 - lastX0, y0 - lastY0);
             } else {
                 float omx = (lastX0 + lastX1) / 2, omy = (lastY0 + lastY1) / 2;
                 float nmx = (x0 + x1) / 2, nmy = (y0 + y1) / 2;
                 double od = Math.hypot(lastX1 - lastX0, lastY1 - lastY0), nd = Math.hypot(x1 - x0, y1 - y0);
                 if (od > 10) {
                     float s = (float) (nd / od);
-                    float rot = (float) Math.toDegrees(Math.atan2(y1 - y0, x1 - x0) - Math.atan2(lastY1 - lastY0, lastX1 - lastX0));
-                    photoM.postTranslate(-omx, -omy);
-                    photoM.postScale(s, s);
-                    photoM.postRotate(rot);
-                    photoM.postTranslate(nmx, nmy);
+                    float rot = allowRotate ? (float) Math.toDegrees(Math.atan2(y1 - y0, x1 - x0)
+                            - Math.atan2(lastY1 - lastY0, lastX1 - lastX0)) : 0;
+                    if (!sceneSpace) { // keep view zoom between 1x and 12x
+                        float cur = viewScale();
+                        s = Math.max(1f / cur, Math.min(12f / cur, s));
+                    }
+                    target.postTranslate(-omx, -omy);
+                    target.postScale(s, s);
+                    if (rot != 0) target.postRotate(rot);
+                    target.postTranslate(nmx, nmy);
                 }
             }
         }
