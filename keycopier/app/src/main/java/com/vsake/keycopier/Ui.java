@@ -33,7 +33,7 @@ public class Ui {
         Window w = a.getWindow();
         w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
         WindowManager.LayoutParams lp = w.getAttributes();
-        lp.screenBrightness = 1f;
+        lp.screenBrightness = Settings.get(a, Settings.BRIGHT) ? 1f : WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
         if (Build.VERSION.SDK_INT >= 28) {
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }

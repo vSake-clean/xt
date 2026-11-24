@@ -96,6 +96,10 @@ public class KeyActivity extends BaseActivity {
             if (keyView.autoDetect()) Toast.makeText(this, "Odczytano – sprawdź i popraw ręcznie", Toast.LENGTH_SHORT).show();
         });
         panel.addView(row(photoMoveBtn, autoBtn), lp());
+        panel.addView(Ui.button(this, "⚙ Ustawienia", v -> Settings.show(this, () -> {
+            keyView.reloadSettings();
+            Ui.immersive(this);
+        })), lp());
         updatePhotoButtons();
 
         panelScroll = new ScrollView(this);

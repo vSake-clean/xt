@@ -54,6 +54,19 @@ public class KeyView extends View {
     private final Paint loupeRing = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private float shoulderPx, baseY;
+    private boolean optLoupe, optTouchDepth, optTouchPin, optVibrate, optHints, optLadder;
+
+    /** Re-reads quick settings (⚙). */
+    public void reloadSettings() {
+        Context c = getContext();
+        optLoupe = Settings.get(c, Settings.LOUPE);
+        optTouchDepth = Settings.get(c, Settings.TOUCH_DEPTH);
+        optTouchPin = Settings.get(c, Settings.TOUCH_PIN);
+        optVibrate = Settings.get(c, Settings.VIBRATE);
+        optHints = Settings.get(c, Settings.HINTS);
+        optLadder = Settings.get(c, Settings.LADDER);
+        invalidate();
+    }
 
     public KeyView(Context c) {
         super(c);
@@ -70,6 +83,7 @@ public class KeyView extends View {
         warn.setColor(0xFFB00000); warn.setTypeface(Typeface.DEFAULT_BOLD);
         loupeRing.setStyle(Paint.Style.STROKE); loupeRing.setStrokeWidth(5f); loupeRing.setColor(0xFF000000);
         photoPaint.setAlpha(170);
+        reloadSettings();
     }
 
     public void setup(Profile p, int[] code, float pxmm) {
@@ -136,7 +150,7 @@ public class KeyView extends View {
     public void resetCode() { for (int i = 0; i < code.length; i++) code[i] = 0; changed(); }
 
     private void changed() {
-        performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        if (optVibrate) performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         invalidate();
         if (listener != null) listener.onChanged();
     }
@@ -160,7 +174,7 @@ public class KeyView extends View {
         if (p == null) return;
         layoutKey();
         drawScene(c, true);
-        if (touching) drawLoupe(c);
+        if (touching && optLoupe) drawLoupe(c);
     }
 
     private void drawScene(Canvas c, boolean hud) {
@@ -220,7 +234,7 @@ public class KeyView extends View {
         Paint ladder = new Paint(thin);
         ladder.setStrokeWidth(1.5f);
         ladder.setColor(0xAA000000);
-        for (int d = 0; d < p.depthCount; d++) {
+        for (int d = 0; optLadder && d < p.depthCount; d++) {
             float y = sy(bottomSel ? H - p.root(d) : p.root(d));
             c.drawLine(selX - tick, y, selX + tick, y, ladder);
         }
@@ -248,7 +262,7 @@ public class KeyView extends View {
         hint.setColor(0xAA000000);
         String h = photoMove ? "Tryb zdjęcia: przesuń / powiększ / obróć dwoma palcami, dopasuj do obrysu"
                 : "Oprzyj ramię klucza o czerwoną linię" + (p.doubleSided ? "  ·  ⇵ zmienia krawędź" : "");
-        c.drawText(h, hx, getHeight() - 16, hint);
+        if (optHints) c.drawText(h, hx, getHeight() - 16, hint);
     }
 
     private String macsWarning() {
@@ -355,6 +369,7 @@ public class KeyView extends View {
         touching = true;
         if (photoMove) { handlePhotoGesture(e); invalidate(); return true; }
         if (a != MotionEvent.ACTION_DOWN && a != MotionEvent.ACTION_MOVE) return true;
+        if (!optTouchDepth && !optTouchPin) { invalidate(); return true; } // touch editing disabled
         layoutKey();
         double x = mmX(e.getX()), y = mmY(e.getY());
         invalidate();
@@ -364,8 +379,13 @@ public class KeyView extends View {
         boolean bottom = p.doubleSided && y < p.bladeHeight / 2;
         int idx = (bottom ? p.pins : 0) + pin;
         boolean change = false;
-        if (idx != selected) { selected = idx; change = true; }
-        if (y > -2.5 && y < p.bladeHeight + 2.5) {
+        if (optTouchPin) {
+            if (idx != selected) { selected = idx; change = true; }
+        } else {
+            idx = selected; // depth only on the pin chosen with the buttons
+            bottom = onBottomEdge();
+        }
+        if (optTouchDepth && y > -2.5 && y < p.bladeHeight + 2.5) {
             int best = code[idx];
             double bd = Double.MAX_VALUE;
             for (int d = 0; d < p.depthCount; d++) {

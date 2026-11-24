@@ -11,6 +11,7 @@ Gotowe APK: `KeyCopier.apk` (w tym folderze), Android 5.0+.
 - **Klucze dwustronne:** osobny kod dla górnej i dolnej krawędzi (⇵, kopiowanie góra→dół).
 - **Zdjęcie klucza 📷:** zdjęcie pod obrysem, dopasowanie palcami (przesuń, powiększ, obróć), a potem ✨ Auto odczytuje nacięcia.
 - **Eksport 📤:** model 3D (STL z podglądem 3D), PDF 1:1 do druku z linijką kontrolną, SVG (laser / ploter), tekst.
+- **⚙ Ustawienia** (na ekranie klucza i w menu): lupa, dotyk zmienia głębokość / wybiera pin (oba wyłączone = tylko przyciski), wibracja, pełna jasność, podpowiedzi, podziałka głębokości.
 - **Model 3D:** główka z otworem na kółko, ostrze z nacięciami, rowki profilu (przybliżone, edytowalne w profilu: `F/B:wysokość:szerokość:głębokość`), grubość ostrza.
 
 ## Budowanie

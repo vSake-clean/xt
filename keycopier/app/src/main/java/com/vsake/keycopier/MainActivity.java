@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
                 : "⚠ Ekran nieskalibrowany – zrób kalibrację kartą, inaczej wymiary mogą się nie zgadzać.", 14);
         info.setTextColor(Store.isCalibrated(this) ? 0xFF9E9E9E : 0xFFFFC107);
         list.addView(info);
+        list.addView(Ui.button(this, "⚙ Ustawienia (lupa, dotyk, wibracja…)", v -> Settings.show(this, null)), lp());
         list.addView(Ui.button(this, "📏 Kalibracja ekranu (karta)",
                 v -> startActivity(new Intent(this, CalibrationActivity.class))), lp());
 
