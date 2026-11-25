@@ -1,0 +1,32 @@
+{
+  "package": "com.xt.dzwieki",
+  "name": "Dźwięki",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "icon": "/common/logo.png",
+  "display": {
+    "backgroundColor": "#000000"
+  },
+  "simulationVersion": "default",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    { "name": "system.router" },
+    { "name": "system.vibrator" },
+    { "name": "system.audio" },
+    { "name": "system.storage" }
+  ],
+  "config": {
+    "logLevel": "log",
+    "designWidth": 390
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      }
+    }
+  }
+}

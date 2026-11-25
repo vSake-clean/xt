@@ -1,0 +1,832 @@
+<template>
+  <div class="app">
+    <!-- Menu -->
+    <div class="menu" if="{{ mode === 'menu' }}">
+      <image class="title" src="/common/img/t_title.png"></image>
+      <div class="tile" @touchstart="hit('kind:s')" @click="hit('kind:s')">
+        <image class="tileimg" src="/common/img/m_snd.png"
+               @touchstart="hit('kind:s')" @click="hit('kind:s')"></image>
+      </div>
+      <div class="tile" @touchstart="hit('kind:v')" @click="hit('kind:v')">
+        <image class="tileimg" src="/common/img/m_vib.png"
+               @touchstart="hit('kind:v')" @click="hit('kind:v')"></image>
+      </div>
+    </div>
+
+    <!-- Lista dźwięków albo wibracji -->
+    <div class="scr" if="{{ mode === 'list' }}">
+      <div class="head">
+        <div class="back" @touchstart="hit('back')" @click="hit('back')">
+          <image class="backimg" src="/common/img/i_back.png"
+                 @touchstart="hit('back')" @click="hit('back')"></image>
+        </div>
+        <image class="htitle" src="{{ headImg }}"></image>
+      </div>
+      <div class="row" for="{{ (ri, r) in rows }}"
+           @touchstart="hit('row:' + r.i)" @click="hit('row:' + r.i)">
+        <image class="rname" src="{{ r.name }}"
+               @touchstart="hit('row:' + r.i)" @click="hit('row:' + r.i)"></image>
+        <div class="rlvl" @touchstart="hit('row:' + r.i)" @click="hit('row:' + r.i)">
+          <image class="kd" for="{{ (di, dd) in r.lv }}" src="{{ dd }}"
+                 @touchstart="hit('row:' + r.i)" @click="hit('row:' + r.i)"></image>
+        </div>
+        <image class="more" src="/common/img/i_more.png"
+               @touchstart="hit('row:' + r.i)" @click="hit('row:' + r.i)"></image>
+      </div>
+      <div class="nav">
+        <div class="nbtn" @touchstart="hit('prev')" @click="hit('prev')">
+          <image class="nimg" src="/common/img/i_prev.png"
+                 @touchstart="hit('prev')" @click="hit('prev')"></image>
+        </div>
+        <image class="pg" src="{{ pageImg }}"></image>
+        <div class="nbtn" @touchstart="hit('next')" @click="hit('next')">
+          <image class="nimg" src="/common/img/i_next.png"
+                 @touchstart="hit('next')" @click="hit('next')"></image>
+        </div>
+      </div>
+    </div>
+
+    <!-- Poziom głośności jednego dźwięku / wibracji -->
+    <div class="scr" if="{{ mode === 'level' }}">
+      <div class="head">
+        <div class="back" @touchstart="hit('back')" @click="hit('back')">
+          <image class="backimg" src="/common/img/i_back.png"
+                 @touchstart="hit('back')" @click="hit('back')"></image>
+        </div>
+        <image class="htitle" src="{{ nameImg }}"></image>
+      </div>
+      <div class="big">
+        <image class="bd" for="{{ bigDigits }}" src="{{ $item }}"></image>
+      </div>
+      <image class="of" src="{{ ofImg }}"></image>
+      <div class="grid">
+        <div class="grow">
+          <div class="pm" @touchstart="hit('d:-1')" @click="hit('d:-1')">
+            <image class="pmimg" src="/common/img/b_m1.png"
+                   @touchstart="hit('d:-1')" @click="hit('d:-1')"></image>
+          </div>
+          <div class="pm" @touchstart="hit('d:1')" @click="hit('d:1')">
+            <image class="pmimg" src="/common/img/b_p1.png"
+                   @touchstart="hit('d:1')" @click="hit('d:1')"></image>
+          </div>
+        </div>
+        <div class="grow">
+          <div class="pm" @touchstart="hit('d:-10')" @click="hit('d:-10')">
+            <image class="pmimg" src="/common/img/b_m10.png"
+                   @touchstart="hit('d:-10')" @click="hit('d:-10')"></image>
+          </div>
+          <div class="pm" @touchstart="hit('d:10')" @click="hit('d:10')">
+            <image class="pmimg" src="/common/img/b_p10.png"
+                   @touchstart="hit('d:10')" @click="hit('d:10')"></image>
+          </div>
+        </div>
+        <div class="grow">
+          <div class="pm" @touchstart="hit('d:-100')" @click="hit('d:-100')">
+            <image class="pmimg" src="/common/img/b_m100.png"
+                   @touchstart="hit('d:-100')" @click="hit('d:-100')"></image>
+          </div>
+          <div class="pm" @touchstart="hit('d:100')" @click="hit('d:100')">
+            <image class="pmimg" src="/common/img/b_p100.png"
+                   @touchstart="hit('d:100')" @click="hit('d:100')"></image>
+          </div>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="small" @touchstart="hit('min')" @click="hit('min')">
+          <image class="smallimg" src="/common/img/b_min.png"
+                 @touchstart="hit('min')" @click="hit('min')"></image>
+        </div>
+        <div class="play" style="background-color: {{ accent }};"
+             @touchstart="hit('play')" @click="hit('play')">
+          <image class="playimg" src="{{ playImg }}"
+                 @touchstart="hit('play')" @click="hit('play')"></image>
+        </div>
+        <div class="small" if="{{ custom }}" @touchstart="hit('edit')" @click="hit('edit')">
+          <image class="smallimg" src="/common/img/b_edit.png"
+                 @touchstart="hit('edit')" @click="hit('edit')"></image>
+        </div>
+        <div class="smallgap" if="{{ !custom }}"></div>
+      </div>
+      <image class="err" if="{{ err }}" src="/common/img/t_err.png"></image>
+    </div>
+
+    <!-- Edytor własnego dźwięku / wibracji -->
+    <div class="scr" if="{{ mode === 'edit' }}">
+      <div class="head">
+        <div class="back" @touchstart="hit('back')" @click="hit('back')">
+          <image class="backimg" src="/common/img/i_back.png"
+                 @touchstart="hit('back')" @click="hit('back')"></image>
+        </div>
+        <image class="htitle" src="{{ nameImg }}"></image>
+      </div>
+      <image class="hint" src="/common/img/t_hint.png"></image>
+      <div class="cells">
+        <div class="cell" for="{{ (ai, a) in cellsA }}"
+             @touchstart="hit('c:' + a.i)" @click="hit('c:' + a.i)">
+          <image class="cellimg" src="{{ a.img }}"
+                 @touchstart="hit('c:' + a.i)" @click="hit('c:' + a.i)"></image>
+        </div>
+      </div>
+      <div class="cells">
+        <div class="cell" for="{{ (bi, b) in cellsB }}"
+             @touchstart="hit('c:' + b.i)" @click="hit('c:' + b.i)">
+          <image class="cellimg" src="{{ b.img }}"
+                 @touchstart="hit('c:' + b.i)" @click="hit('c:' + b.i)"></image>
+        </div>
+      </div>
+      <div class="ebottom">
+        <div class="play" style="background-color: {{ accent }};"
+             @touchstart="hit('play')" @click="hit('play')">
+          <image class="playimg" src="{{ playImg }}"
+                 @touchstart="hit('play')" @click="hit('play')"></image>
+        </div>
+        <div class="done" @touchstart="hit('back')" @click="hit('back')">
+          <image class="doneimg" src="/common/img/b_done.png"
+                 @touchstart="hit('back')" @click="hit('back')"></image>
+        </div>
+      </div>
+      <image class="err" if="{{ err }}" src="/common/img/t_err.png"></image>
+    </div>
+  </div>
+</template>
+
+<script>
+// Dźwięki: własne, bardzo ciche dźwięki i wibracje na Redmi Watch 4 (Xiaomi Vela).
+// Każdy dźwięk i każda wibracja ma własny poziom 1..1000, zapisany
+// w @system.storage ("lv"). Brak zapisu = poziom 1 (super cicho).
+// Tekst nie jest rysowany przez system, więc wszystkie napisy to PNG.
+import vibrator from '@system.vibrator'
+import audio from '@system.audio'
+import storage from '@system.storage'
+import {
+  clamp, soundPlan, vibeTimes, customVibePattern, normalizeSteps, getLevel, setLevel,
+  parseLevels, digits, NOTE_STEPS, NOTE_OPTIONS, NOTE_MS, VIBE_STEPS, VIBE_OPTIONS
+} from '../../common/levels.js'
+import { DEFAULT_NOTES, DEFAULT_VIBE, PER_PAGE, itemsOf, levelKey } from '../../common/catalog.js'
+
+const IMG = '/common/img/'
+const TEAL = '#4cd7c8'
+const LAV = '#b39dfa'
+const SOUND_MAX_MS = 2600
+
+function save(key, value) {
+  try {
+    storage.set({ key: key, value: value })
+  } catch (e) {}
+}
+
+function load(key, cb) {
+  try {
+    storage.get({
+      key: key,
+      success: function (data) {
+        if (data) cb(data)
+      }
+    })
+  } catch (e) {}
+}
+
+export default {
+  private: {
+    mode: 'menu',
+    headImg: IMG + 'h_s.png',
+    rows: [],
+    pageImg: IMG + 'p_1.png',
+    nameImg: IMG + 'n_s_ping.png',
+    ofImg: IMG + 't_of_s.png',
+    bigDigits: [],
+    accent: TEAL,
+    playImg: IMG + 'b_play.png',
+    custom: false,
+    err: false,
+    cellsA: [],
+    cellsB: []
+  },
+
+  onInit() {
+    this._last = { id: '', t: 0 }
+    this._levels = {}
+    this._notes = DEFAULT_NOTES.slice()
+    this._vibe = DEFAULT_VIBE.slice()
+    this._fmt = 'mp3'
+    this._kind = 's'
+    this._page = 0
+    this._item = null
+    this._level = 1
+    this._timers = []
+    this._token = 0
+    this._origVol = -1
+    this._volSet = false
+    this._lock = 0
+    this._itemIndex = -1
+    const self = this
+    load('lv', function (d) {
+      self._levels = parseLevels(d)
+    })
+    load('cs', function (d) {
+      try {
+        self._notes = normalizeSteps(JSON.parse(d), NOTE_STEPS, NOTE_OPTIONS, DEFAULT_NOTES)
+      } catch (e) {}
+    })
+    load('cv', function (d) {
+      try {
+        self._vibe = normalizeSteps(JSON.parse(d), VIBE_STEPS, VIBE_OPTIONS, DEFAULT_VIBE)
+      } catch (e) {}
+    })
+    load('fmt', function (d) {
+      if (d === 'wav' || d === 'mp3') self._fmt = d
+    })
+    try {
+      const v = audio.volume
+      if (typeof v === 'number' && v >= 0 && v <= 1) self._origVol = v
+    } catch (e) {}
+    try {
+      audio.onended = function () {
+        if (self._melody) return
+        self._done(self._token)
+      }
+      audio.onerror = function () {
+        self._audioError()
+      }
+    } catch (e) {}
+  },
+
+  onHide() {
+    this._stop()
+  },
+
+  onDestroy() {
+    this._stop()
+    try {
+      audio.onended = null
+      audio.onerror = null
+      if (this._volSet && this._origVol >= 0) audio.volume = this._origVol
+    } catch (e) {}
+  },
+
+  onBackPress() {
+    if (this.mode === 'menu') return false
+    this._back()
+    return true
+  },
+
+  // Jedno dotknięcie może dać touchstart i click, na obrazku i na przycisku.
+  // Powtórzenie tego samego id w ciągu 300 ms jest ignorowane.
+  hit(id) {
+    const now = Date.now()
+    if (this._last.id === id && now - this._last.t < 300) return
+    // Po zmianie ekranu spóźniony "click" z tego samego dotknięcia mógłby
+    // trafić w przycisk nowego ekranu, więc przez chwilę nic nie przyjmujemy.
+    if (now < this._lock) return
+    this._last = { id: id, t: now }
+    const before = this.mode + ':' + this._kind + ':' + this._page + ':' + this._itemIndex
+    this._handle(id)
+    if (this.mode + ':' + this._kind + ':' + this._page + ':' + this._itemIndex !== before) this._lock = Date.now() + 400
+  },
+
+  _handle(id) {
+    if (id === 'back') return this._back()
+    if (id === 'kind:s' || id === 'kind:v') return this._openList(id.slice(5), 0)
+    if (id === 'prev' || id === 'next') {
+      const pages = Math.ceil(itemsOf(this._kind).length / PER_PAGE)
+      const p = this._page + (id === 'next' ? 1 : -1)
+      if (p >= 0 && p < pages) this._openList(this._kind, p)
+      return
+    }
+    if (id.indexOf('row:') === 0) return this._openLevel(parseInt(id.slice(4), 10))
+    if (id.indexOf('d:') === 0) return this._change(parseInt(id.slice(2), 10))
+    if (id === 'min') return this._setLevel(1)
+    if (id === 'play') return this._playing ? this._stop() : this._play()
+    if (id === 'edit') return this._openEdit()
+    if (id.indexOf('c:') === 0) return this._cycle(parseInt(id.slice(2), 10))
+  },
+
+  // ------------------------------------------------------------ ekrany
+  _back() {
+    this._stop()
+    if (this.mode === 'edit') return this._openLevel(this._itemIndex)
+    if (this.mode === 'level') return this._openList(this._kind, this._page)
+    this.mode = 'menu'
+  },
+
+  _openList(kind, page) {
+    this._stop()
+    this._kind = kind
+    this._page = page
+    const items = itemsOf(kind)
+    const list = []
+    for (let i = page * PER_PAGE; i < Math.min(items.length, (page + 1) * PER_PAGE); i++) {
+      const lv = getLevel(this._levels, levelKey(kind, items[i].id))
+      list.push({
+        i: i,
+        name: IMG + 'n_' + kind + '_' + items[i].id + '.png',
+        lv: digits(lv).map(function (c) {
+          return IMG + 'k_' + c + '.png'
+        })
+      })
+    }
+    this.headImg = IMG + 'h_' + kind + '.png'
+    this.pageImg = IMG + 'p_' + (page + 1) + '.png'
+    this.accent = kind === 's' ? TEAL : LAV
+    this.rows = list
+    this.mode = 'list'
+  },
+
+  _openLevel(i) {
+    const item = itemsOf(this._kind)[i]
+    if (!item) return
+    this._stop()
+    this._item = item
+    this._itemIndex = i
+    this._level = getLevel(this._levels, levelKey(this._kind, item.id))
+    this.nameImg = IMG + 'n_' + this._kind + '_' + item.id + '.png'
+    this.custom = !!item.custom
+    this.ofImg = IMG + 't_of_' + this._kind + '.png'
+    this.err = false
+    this.bigDigits = []
+    this._showLevel()
+    this.mode = 'level'
+  },
+
+  _openEdit() {
+    this._stop()
+    this._buildCells()
+    this.mode = 'edit'
+  },
+
+  // ------------------------------------------------------------ poziom
+  _change(delta) {
+    this._setLevel(this._level + delta)
+  },
+
+  _setLevel(l) {
+    l = clamp(l)
+    if (l === this._level) return
+    this._level = l
+    this._levels = setLevel(this._levels, levelKey(this._kind, this._item.id), l)
+    save('lv', JSON.stringify(this._levels))
+    this._showLevel()
+  },
+
+  _showLevel() {
+    const next = digits(this._level).map(function (c) {
+      return IMG + 'd_' + c + '.png'
+    })
+    this._update(this.bigDigits, next)
+  },
+
+  // ------------------------------------------------------------ edytor
+  _steps() {
+    return this._kind === 's' ? this._notes : this._vibe
+  },
+
+  _cellImg(v) {
+    return IMG + (this._kind === 's' ? 'e_' : 'w_') + v + '.png'
+  },
+
+  _buildCells() {
+    const st = this._steps()
+    const a = []
+    const b = []
+    for (let i = 0; i < st.length; i++) {
+      const c = { i: i, img: this._cellImg(st[i]) }
+      if (i < st.length / 2) a.push(c)
+      else b.push(c)
+    }
+    this.cellsA = a
+    this.cellsB = b
+  },
+
+  _cycle(i) {
+    const st = this._steps()
+    if (!(i >= 0 && i < st.length)) return
+    const opts = this._kind === 's' ? NOTE_OPTIONS : VIBE_OPTIONS
+    st[i] = (st[i] + 1) % opts
+    save(this._kind === 's' ? 'cs' : 'cv', JSON.stringify(st))
+    const half = st.length / 2
+    const c = { i: i, img: this._cellImg(st[i]) }
+    if (i < half) this.cellsA.splice(i, 1, c)
+    else this.cellsB.splice(i - half, 1, c)
+    // podgląd zmienionego kroku
+    if (st[i] > 0) this._preview(st[i])
+  },
+
+  _preview(v) {
+    this._stop()
+    if (this._kind === 's') {
+      this._audio('n' + v, soundPlan(this._level))
+    } else {
+      this._vibrate(customVibePattern([v]))
+    }
+  },
+
+  // ------------------------------------------------------------ odtwarzanie
+  _play() {
+    this._stop()
+    const item = this._item
+    if (!item) return
+    this.err = false
+    if (this._kind === 'v') {
+      const pattern = item.custom ? customVibePattern(this._vibe) : item.pattern
+      return this._vibrate(pattern)
+    }
+    if (item.custom) return this._playMelody()
+    this._start(SOUND_MAX_MS)
+    this._audio(item.id, soundPlan(this._level))
+  },
+
+  _start(ms) {
+    this._token++
+    const tok = this._token
+    this._playing = true
+    this.playImg = IMG + 'b_stop.png'
+    const self = this
+    this._timers.push(setTimeout(function () {
+      self._done(tok)
+    }, ms))
+    return tok
+  },
+
+  _done(tok) {
+    if (tok !== this._token) return
+    this._melody = false
+    this._playing = false
+    this.playImg = IMG + 'b_play.png'
+  },
+
+  _stop() {
+    for (let i = 0; i < this._timers.length; i++) clearTimeout(this._timers[i])
+    this._timers = []
+    this._token++
+    if (this._melody || this._playing) {
+      try {
+        audio.stop()
+      } catch (e) {}
+    }
+    this._melody = false
+    this._playing = false
+    this.playImg = IMG + 'b_play.png'
+  },
+
+  _vibrate(pattern) {
+    const times = vibeTimes(pattern, this._level)
+    if (!times.length) return
+    const tok = this._start(times[times.length - 1] + 200)
+    const self = this
+    function pulse() {
+      if (tok !== self._token) return
+      try {
+        vibrator.vibrate({ mode: 'short' })
+      } catch (e) {}
+    }
+    for (let i = 0; i < times.length; i++) {
+      this._timers.push(setTimeout(pulse, times[i]))
+    }
+  },
+
+  _playMelody() {
+    const notes = this._notes
+    const plan = soundPlan(this._level)
+    let lastNote = -1
+    for (let i = 0; i < notes.length; i++) if (notes[i] > 0) lastNote = i
+    if (lastNote < 0) return
+    const tok = this._start((lastNote + 1) * NOTE_MS + 300)
+    this._melody = true
+    const self = this
+    for (let i = 0; i <= lastNote; i++) {
+      if (!notes[i]) continue
+      const name = 'n' + notes[i]
+      this._timers.push(setTimeout(function () {
+        if (tok !== self._token) return
+        self._audio(name, plan)
+      }, i * NOTE_MS))
+    }
+  },
+
+  _audio(name, plan) {
+    this._cur = { name: name, plan: plan }
+    if (!this._tryPlay(name, plan)) this._audioError()
+  },
+
+  _tryPlay(name, plan) {
+    try {
+      audio.src = '/common/snd/' + name + '_' + plan.tier + '.' + this._fmt
+      audio.volume = plan.volume
+      this._volSet = true
+      audio.play()
+      return true
+    } catch (e) {
+      return false
+    }
+  },
+
+  // Gdy mp3 nie zadziała, aplikacja raz przełącza się na pliki .wav.
+  // Jeśli i .wav nie zagra, pokazuje napis "Zegarek nie odtworzył dźwięku".
+  _audioError() {
+    if (this._fmt === 'mp3') {
+      this._fmt = 'wav'
+      save('fmt', 'wav')
+      const c = this._cur
+      this._cur = null
+      if (!c || this._tryPlay(c.name, c.plan)) return
+    }
+    this.err = true
+    this._stop()
+  },
+
+  _update(arr, next) {
+    let same = arr.length === next.length
+    for (let i = 0; same && i < next.length; i++) {
+      if (arr[i] !== next[i]) same = false
+    }
+    if (same) return
+    Array.prototype.splice.apply(arr, [0, arr.length].concat(next))
+  }
+}
+</script>
+
+<style>
+.app {
+  width: 390px;
+  height: 450px;
+  background-color: #000000;
+}
+
+.menu {
+  width: 390px;
+  height: 450px;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+}
+
+.title {
+  width: 300px;
+  height: 40px;
+  margin-bottom: 18px;
+}
+
+.tile {
+  width: 330px;
+  height: 130px;
+  border-radius: 28px;
+  background-color: #1c1c1e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.tileimg {
+  width: 300px;
+  height: 110px;
+}
+
+.scr {
+  width: 390px;
+  height: 450px;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+}
+
+.head {
+  width: 340px;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.back {
+  width: 56px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #2c2c2e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.backimg {
+  width: 40px;
+  height: 34px;
+}
+
+.htitle {
+  width: 230px;
+  height: 40px;
+}
+
+.row {
+  width: 340px;
+  height: 54px;
+  border-radius: 16px;
+  background-color: #1c1c1e;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-left: 6px;
+  padding-right: 8px;
+}
+
+.rname {
+  width: 230px;
+  height: 40px;
+}
+
+.rlvl {
+  width: 76px;
+  height: 24px;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.kd {
+  width: 14px;
+  height: 24px;
+}
+
+.more {
+  width: 20px;
+  height: 24px;
+}
+
+.nav {
+  width: 340px;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.nbtn {
+  width: 80px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #2c2c2e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.nimg {
+  width: 40px;
+  height: 34px;
+}
+
+.pg {
+  width: 50px;
+  height: 30px;
+}
+
+.big {
+  width: 340px;
+  height: 80px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.bd {
+  width: 46px;
+  height: 80px;
+}
+
+.of {
+  width: 300px;
+  height: 26px;
+  margin-bottom: 8px;
+}
+
+.grid {
+  width: 340px;
+  flex-direction: column;
+}
+
+.grow {
+  width: 340px;
+  height: 50px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pm {
+  width: 164px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #2c2c2e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmimg {
+  width: 100px;
+  height: 34px;
+}
+
+.bottom {
+  width: 340px;
+  height: 56px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.small {
+  width: 76px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: #2c2c2e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.smallgap {
+  width: 76px;
+  height: 56px;
+}
+
+.smallimg {
+  width: 60px;
+  height: 40px;
+}
+
+.play {
+  width: 160px;
+  height: 56px;
+  border-radius: 28px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.playimg {
+  width: 60px;
+  height: 40px;
+}
+
+.err {
+  width: 330px;
+  height: 26px;
+  margin-top: 4px;
+}
+
+.hint {
+  width: 300px;
+  height: 26px;
+  margin-bottom: 10px;
+}
+
+.cells {
+  width: 344px;
+  height: 80px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cell {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  background-color: #1c1c1e;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.cellimg {
+  width: 60px;
+  height: 60px;
+}
+
+.ebottom {
+  width: 340px;
+  height: 56px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.done {
+  width: 160px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: #ffffff;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.doneimg {
+  width: 110px;
+  height: 34px;
+}
+</style>
