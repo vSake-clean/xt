@@ -1,5 +1,5 @@
-// Lista dźwięków i wibracji. Dźwięki są oryginalne, syntezowane przez
-// scripts/gen_sounds.py (pliki src/common/snd/<id>_<wersja>.mp3/.wav).
+// Lista dźwięków, memów i wibracji. Dźwięki są oryginalne, syntezowane przez
+// scripts/gen_sounds.py (pliki src/common/snd/<id>_<wersja>.mp3 i <id>.wav).
 
 export const SOUNDS = [
   { id: 'ping' },
@@ -11,6 +11,24 @@ export const SOUNDS = [
   { id: 'alarm' },
   { id: 'fanfara' },
   { id: 'wlasny', custom: true }
+]
+
+// Memowe dźwięki: oryginalne, tylko w klimacie znanych memów
+// (bez nagrań z gier i filmów).
+export const MEMES = [
+  { id: 'bomba_plant' },
+  { id: 'bomba_tik' },
+  { id: 'wybuch' },
+  { id: 'kliker' },
+  { id: 'boom' },
+  { id: 'smutna' },
+  { id: 'badumtss' },
+  { id: 'trabka' },
+  { id: 'rura' },
+  { id: 'swierszcze' },
+  { id: 'boing' },
+  { id: 'blad' },
+  { id: 'pierd' }
 ]
 
 // Wzory wibracji: 'b' krótkie uderzenie, 'B' długie, liczba = pauza w ms.
@@ -31,8 +49,15 @@ export const DEFAULT_VIBE = [1, 0, 1, 0, 2, 0, 0, 0]
 
 export const PER_PAGE = 5
 
+// Rodzaje: 's' dźwięki, 'm' memy, 'v' wibracje.
 export function itemsOf(kind) {
-  return kind === 's' ? SOUNDS : VIBES
+  if (kind === 's') return SOUNDS
+  if (kind === 'm') return MEMES
+  return VIBES
+}
+
+export function pagesOf(kind) {
+  return Math.ceil(itemsOf(kind).length / PER_PAGE)
 }
 
 export function levelKey(kind, id) {

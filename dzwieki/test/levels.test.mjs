@@ -3,7 +3,9 @@ import {
   MIN, MAX, DEFAULT, TIERS, clamp, gain, soundPlan, pulses, longPulses, vibeTimes,
   customVibePattern, normalizeSteps, getLevel, setLevel, parseLevels, digits
 } from '../src/common/levels.js'
-import { SOUNDS, VIBES, DEFAULT_NOTES, DEFAULT_VIBE, levelKey } from '../src/common/catalog.js'
+import { SOUNDS, MEMES, VIBES, DEFAULT_NOTES, DEFAULT_VIBE, levelKey, itemsOf, pagesOf } from '../src/common/catalog.js'
+import { DURATIONS } from '../src/common/durations.js'
+import fs from 'node:fs'
 
 let n = 0
 function t(name, fn) {
@@ -34,8 +36,8 @@ t('poziom 1 jest super cichy, 1000 to pełna głośność', () => {
 })
 
 t('plan dźwięku: najcichszy plik + głośność odtwarzacza', () => {
-  assert.deepEqual(soundPlan(1), { tier: 2, volume: 0.1 })
-  assert.deepEqual(soundPlan(1000), { tier: 0, volume: 1 })
+  assert.deepEqual(soundPlan(1), { tier: 2, volume: 0.1, gain: 0.001 })
+  assert.deepEqual(soundPlan(1000), { tier: 0, volume: 1, gain: 1 })
   for (let l = 1; l <= 1000; l++) {
     const p = soundPlan(l)
     assert.ok(p.volume > 0 && p.volume <= 1, 'volume ' + l)
@@ -102,11 +104,36 @@ t('cyfry poziomu', () => {
   assert.deepEqual(digits(1000), ['1', '0', '0', '0'])
 })
 
-t('katalog: unikalne id, jeden własny w każdej liście', () => {
-  for (const list of [SOUNDS, VIBES]) {
+t('katalog: unikalne id, jeden własny w dźwiękach i wibracjach', () => {
+  for (const list of [SOUNDS, MEMES, VIBES]) {
     const ids = list.map((x) => x.id)
     assert.equal(new Set(ids).size, ids.length)
-    assert.equal(list.filter((x) => x.custom).length, 1)
+  }
+  assert.equal(SOUNDS.filter((x) => x.custom).length, 1)
+  assert.equal(VIBES.filter((x) => x.custom).length, 1)
+  assert.equal(MEMES.filter((x) => x.custom).length, 0)
+  assert.equal(itemsOf('m'), MEMES)
+  assert.equal(pagesOf('s'), 2)
+  assert.equal(pagesOf('m'), 3)
+  assert.equal(pagesOf('v'), 2)
+})
+
+t('każdy dźwięk ma pliki i długość', () => {
+  const dir = new URL('../src/common/snd/', import.meta.url)
+  const ids = SOUNDS.concat(MEMES).filter((x) => !x.custom).map((x) => x.id)
+  for (let i = 1; i <= 8; i++) ids.push('n' + i)
+  for (const id of ids) {
+    assert.ok(DURATIONS[id] > 0 && DURATIONS[id] < 8000, 'długość ' + id)
+    for (const f of [id + '_0.mp3', id + '_1.mp3', id + '_2.mp3', id + '.wav']) {
+      assert.ok(fs.statSync(new URL(f, dir)).size > 0, f)
+    }
+  }
+  const img = new URL('../src/common/img/', import.meta.url)
+  for (const [k, list] of [['s', SOUNDS], ['m', MEMES], ['v', VIBES]]) {
+    for (const x of list) assert.ok(fs.existsSync(new URL('n_' + k + '_' + x.id + '.png', img)), x.id)
+    for (let p = 1; p <= pagesOf(k); p++) {
+      assert.ok(fs.existsSync(new URL('p_' + p + '_' + pagesOf(k) + '.png', img)))
+    }
   }
 })
 

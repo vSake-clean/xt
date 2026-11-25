@@ -211,7 +211,9 @@ t('mp3 nie działa: przejście na wav i zapamiętanie', () => {
   const before = played.length
   tap(vm, 'play')
   const srcs = played.slice(before).map((p) => p.src)
-  assert.deepEqual(srcs, ['/common/snd/kropla_2.mp3', '/common/snd/kropla_2.wav'])
+  assert.deepEqual(srcs, ['/common/snd/kropla_2.mp3', '/common/snd/kropla.wav'])
+  // wav jest tylko w pełnej wersji, więc cała głośność idzie przez odtwarzacz
+  assert.equal(played[played.length - 1].volume, 0.001)
   assert.equal(store.fmt, 'wav')
   assert.equal(vm.err, false)
   const vm2 = mount()
@@ -219,7 +221,7 @@ t('mp3 nie działa: przejście na wav i zapamiętanie', () => {
   tap(vm2, 'row:1')
   const b2 = played.length
   tap(vm2, 'play')
-  assert.equal(played[b2].src, '/common/snd/kropla_2.wav')
+  assert.equal(played[b2].src, '/common/snd/kropla.wav')
   audio.failMp3 = false
   delete store.fmt
 })
@@ -235,6 +237,33 @@ t('brak modułu audio: napis o błędzie od razu', () => {
   assert.equal(vm.playImg, '/common/img/b_play.png')
   audio.play = saved
   delete store.fmt
+})
+
+t('memy: bomba gra cicho, ma własny poziom i 3 strony', () => {
+  const vm = mount()
+  tap(vm, 'kind:m')
+  assert.equal(vm.mode, 'list')
+  assert.equal(vm.headImg, '/common/img/h_m.png')
+  assert.equal(vm.pageImg, '/common/img/p_1_3.png')
+  assert.equal(vm.rows[0].name, '/common/img/n_m_bomba_plant.png')
+  tap(vm, 'row:1')
+  assert.equal(vm.custom, false)
+  assert.equal(vm.ofImg, '/common/img/t_of_s.png')
+  tap(vm, 'd:10')
+  assert.equal(JSON.parse(store.lv)['m:bomba_tik'], 11)
+  const before = played.length
+  tap(vm, 'play')
+  assert.equal(played[before].src, '/common/snd/bomba_tik_2.mp3')
+  assert.equal(vm.playImg, '/common/img/b_stop.png') // odliczanie trwa ponad 6 s
+  advance(8000)
+  assert.equal(vm.playImg, '/common/img/b_play.png')
+  tap(vm, 'back')
+  tap(vm, 'next')
+  tap(vm, 'next')
+  assert.equal(vm.pageImg, '/common/img/p_3_3.png')
+  assert.equal(vm.rows.length, 3)
+  tap(vm, 'next')
+  assert.equal(vm.pageImg, '/common/img/p_3_3.png')
 })
 
 t('przycisk wstecz zegarka', () => {

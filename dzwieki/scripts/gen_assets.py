@@ -24,6 +24,7 @@ WHITE = (255, 255, 255, 255)
 GRAY = (142, 142, 147, 255)
 TEAL = (76, 215, 200, 255)
 LAV = (179, 157, 250, 255)
+AMBER = (255, 179, 64, 255)
 RED = (255, 105, 97, 255)
 DARK = (0, 0, 0, 255)
 
@@ -31,6 +32,13 @@ SOUNDS = [
     ("ping", "Ping"), ("kropla", "Kropla"), ("dzwonek", "Dzwonek"),
     ("ptaszek", "Ptaszek"), ("gong", "Gong"), ("klik", "Klik"),
     ("alarm", "Alarm"), ("fanfara", "Fanfara"), ("wlasny", "Własny dźwięk"),
+]
+MEMES = [
+    ("bomba_plant", "Bomba: podłożenie"), ("bomba_tik", "Bomba: odliczanie"),
+    ("wybuch", "Wybuch"), ("kliker", "Kliker (pies)"), ("boom", "Boom"),
+    ("smutna", "Smutna trąbka"), ("badumtss", "Ba dum tss"), ("trabka", "Trąbka MLG"),
+    ("rura", "Metalowa rura"), ("swierszcze", "Świerszcze"), ("boing", "Boing"),
+    ("blad", "Błąd"), ("pierd", "Pierd"),
 ]
 VIBES = [
     ("tik", "Tik"), ("podwojny", "Podwójny"), ("serce", "Serce"), ("fala", "Fala"),
@@ -116,15 +124,33 @@ def vibe_icon(d, x, y, s, color):
             d.line(pts, fill=color, width=int(s * 0.05))
 
 
+def bomb_icon(d, x, y, s, color):
+    """Okrągła bomba z lontem i iskrą."""
+    r = s * 0.33
+    cx, cy = x + s * 0.42, y + s * 0.6
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
+    d.rectangle([cx + r * 0.35, cy - r * 1.18, cx + r * 0.85, cy - r * 0.72], fill=color)
+    d.arc([cx + r * 0.55, cy - r * 1.9, cx + r * 1.55, cy - r * 0.9], start=180, end=300,
+          fill=color, width=int(s * 0.05))
+    sx, sy = cx + r * 1.32, cy - r * 1.75
+    for k in range(8):
+        a = k * math.pi / 4
+        rr = s * (0.1 if k % 2 == 0 else 0.06)
+        d.line([(sx, sy), (sx + math.cos(a) * rr, sy + math.sin(a) * rr)], fill=WHITE,
+               width=int(s * 0.03))
+
+
 def menu_tile(name, label, color, kind):
-    box = (300, 110)
+    box = (300, 84)
     img, d = canvas(box)
-    s = 74 * SS
+    s = 62 * SS
     if kind == "s":
-        speaker(d, 14 * SS, 18 * SS, s, color, waves=2)
+        speaker(d, 18 * SS, 11 * SS, s, color, waves=2)
+    elif kind == "m":
+        bomb_icon(d, 16 * SS, 11 * SS, s, color)
     else:
-        vibe_icon(d, 10 * SS, 18 * SS, s, color)
-    d.text((104 * SS, 55 * SS), label, font=font(FONT_BOLD, 34 * SS), fill=WHITE, anchor="lm")
+        vibe_icon(d, 14 * SS, 11 * SS, s, color)
+    d.text((96 * SS, 42 * SS), label, font=font(FONT_BOLD, 32 * SS), fill=WHITE, anchor="lm")
     save(img, name, box)
 
 
@@ -207,11 +233,15 @@ def main():
     # menu
     text("t_title.png", "Ciche dźwięki", (300, 40), 28, TEAL, bold=True)
     menu_tile("m_snd.png", "Dźwięki", TEAL, "s")
+    menu_tile("m_mem.png", "Memy", AMBER, "m")
     menu_tile("m_vib.png", "Wibracje", LAV, "v")
 
     # nagłówki list i nazwy
     text("h_s.png", "Dźwięki", (230, 40), 28, TEAL, bold=True, align="left")
+    text("h_m.png", "Memy", (230, 40), 28, AMBER, bold=True, align="left")
     text("h_v.png", "Wibracje", (230, 40), 28, LAV, bold=True, align="left")
+    for i, s in MEMES:
+        text("n_m_%s.png" % i, s, NAME, 24, align="left")
     for i, s in SOUNDS:
         text("n_s_%s.png" % i, s, NAME, 24, align="left")
     for i, s in VIBES:
@@ -247,8 +277,9 @@ def main():
     arrow("i_prev.png", "left")
     arrow("i_next.png", "right")
     arrow("i_more.png", "right", (20, 24), GRAY)
-    text("p_1.png", "1/2", (50, 30), 18, GRAY)
-    text("p_2.png", "2/2", (50, 30), 18, GRAY)
+    for n in (2, 3, 4):
+        for k in range(1, n + 1):
+            text("p_%d_%d.png" % (k, n), "%d/%d" % (k, n), (50, 30), 18, GRAY)
 
     logo()
     print("OK:", len(os.listdir(IMG)), "plików w src/common/img + logo.png")

@@ -14,14 +14,14 @@ const css = ux.match(/<style>([\s\S]*)<\/style>/)[1]
 const IMG = '/common/img/'
 const k = (n) => String(n).split('').map((c) => IMG + 'k_' + c + '.png')
 const d = (n) => String(n).split('').map((c) => IMG + 'd_' + c + '.png')
-const names = ['ping', 'kropla', 'dzwonek', 'ptaszek', 'gong']
+const memes = ['bomba_plant', 'bomba_tik', 'wybuch', 'kliker', 'boom']
 const lv = [1, 1, 37, 1, 250]
 const states = [
   { mode: 'menu' },
-  { mode: 'list', headImg: IMG + 'h_s.png', pageImg: IMG + 'p_1.png',
-    rows: names.map((n, i) => ({ i, name: IMG + 'n_s_' + n + '.png', lv: k(lv[i]) })) },
-  { mode: 'level', nameImg: IMG + 'n_s_wlasny.png', bigDigits: d(1), custom: true, err: false, ofImg: IMG + 't_of_s.png',
-    accent: '#4cd7c8', playImg: IMG + 'b_play.png' },
+  { mode: 'list', headImg: IMG + 'h_m.png', pageImg: IMG + 'p_1_3.png',
+    rows: memes.map((n, i) => ({ i, name: IMG + 'n_m_' + n + '.png', lv: k(lv[i]) })) },
+  { mode: 'level', nameImg: IMG + 'n_m_bomba_tik.png', bigDigits: d(1), custom: false, err: false,
+    ofImg: IMG + 't_of_s.png', accent: '#ffb340', playImg: IMG + 'b_stop.png' },
   { mode: 'level', nameImg: IMG + 'n_v_serce.png', bigDigits: d(1000), custom: false, err: false, ofImg: IMG + 't_of_v.png',
     accent: '#b39dfa', playImg: IMG + 'b_stop.png' },
   { mode: 'edit', nameImg: IMG + 'n_v_wlasna.png', accent: '#b39dfa', playImg: IMG + 'b_play.png', err: false,
@@ -67,7 +67,7 @@ function emit(node, ctx, out) {
 }
 `
 const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-body { margin: 0; background: #444; display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; width: ${3 * 390 + 4 * 16}px }
+body { margin: 0; background: #444; display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; width: ${4 * 390 + 5 * 16}px }
 .screen { width: 390px; height: 450px; overflow: hidden; border-radius: 48px; position: relative }
 .screen div { display: flex; box-sizing: border-box; flex-shrink: 0 }
 .screen img { display: block; flex-shrink: 0 }
@@ -81,7 +81,7 @@ fs.mkdirSync(path.join(root, '.preview'), { recursive: true })
 fs.writeFileSync(path.join(root, '.preview/index.html'), html)
 try { fs.symlinkSync(path.join(root, 'src'), path.join(root, '.preview/src')) } catch (e) {}
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 3 * 390 + 4 * 16, height: 2 * 450 + 3 * 16 }, deviceScaleFactor: 1 })
+const page = await browser.newPage({ viewport: { width: 4 * 390 + 5 * 16, height: 2 * 450 + 3 * 16 }, deviceScaleFactor: 1 })
 await page.goto('file://' + path.join(root, '.preview/index.html'))
 await page.waitForTimeout(300)
 // sprawdź, czy coś nie wychodzi poza ekran

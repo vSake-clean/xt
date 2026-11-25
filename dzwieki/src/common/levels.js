@@ -38,7 +38,9 @@ export function gain(level) {
   return Math.pow(10, 3 * s - 3)
 }
 
-// Który plik (0/1/2) i jaka głośność odtwarzacza (0.1..1].
+// Który plik mp3 (0/1/2) i jaka głośność odtwarzacza (0.1..1].
+// gain to całkowita głośność, używana dla zapasowego pliku .wav
+// (jest tylko w jednej, pełnej wersji).
 export function soundPlan(level) {
   const g = gain(level)
   let tier = 0
@@ -51,7 +53,7 @@ export function soundPlan(level) {
   let volume = g / TIERS[tier]
   if (volume > 1) volume = 1
   volume = Math.round(volume * 10000) / 10000
-  return { tier: tier, volume: volume }
+  return { tier: tier, volume: volume, gain: Math.round(g * 1000000) / 1000000 }
 }
 
 // Ile krótkich impulsów składa się na jedno uderzenie wibracji.

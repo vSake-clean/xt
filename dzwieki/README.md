@@ -1,8 +1,8 @@
 # Dźwięki na Redmi Watch 4
 
-Szybka aplikacja (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela). Odtwarza własne dźwięki i wibracje. Każdy ma osobny poziom od **1 do 1000**.
+Szybka aplikacja (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela). Odtwarza własne dźwięki, memowe efekty i wibracje. Każdy ma osobny poziom od **1 do 1000**.
 
-![Podgląd: menu, lista, poziom, edytory](podglad.png)
+![Podgląd: menu, memy, poziom, edytory](podglad.png)
 
 **Gotowa paczka:** [`Dzwieki.rpk`](Dzwieki.rpk)
 
@@ -17,18 +17,25 @@ Szybka aplikacja (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperO
 **Wibracja:** Redmi Watch 4 udostępnia aplikacjom tylko krótki i długi impuls, a siły silnika nie da się zmienić. Poziom 1 to jeden najkrótszy impuls, czyli najsłabsza wibracja, jaką zegarek potrafi zrobić. Wyższe poziomy wydłużają każde uderzenie, aż do około 0,4 s brzęczenia. Odczuwalnych stopni jest więc około 10, nie 1000. Sąsiednie poziomy czuć tak samo.
 
 ## Co jest w środku
-| Dźwięki | Wibracje |
-|---|---|
-| Ping, Kropla, Dzwonek, Ptaszek, Gong, Klik, Alarm, Fanfara | Tik, Podwójny, Serce, Fala, SOS, Alarm, Zegar |
-| **Własny dźwięk**: melodia z 8 pól (nuty C D E F G A H C′ albo pauza) | **Własna wibracja**: 8 pól (pauza, krótki tik albo długie BZZ) |
+Menu ma trzy kafelki: **Dźwięki**, **Memy** i **Wibracje**.
 
-Wszystkie dźwięki są oryginalne, syntezowane skryptem `scripts/gen_sounds.py`.
+| Dźwięki | Memy | Wibracje |
+|---|---|---|
+| Ping, Kropla, Dzwonek, Ptaszek, Gong, Klik, Alarm, Fanfara | Bomba: podłożenie, Bomba: odliczanie, Wybuch, Kliker (pies), Boom, Smutna trąbka, Ba dum tss, Trąbka MLG, Metalowa rura, Świerszcze, Boing, Błąd, Pierd | Tik, Podwójny, Serce, Fala, SOS, Alarm, Zegar |
+| **Własny dźwięk**: melodia z 8 pól (nuty C D E F G A H C′ albo pauza) | | **Własna wibracja**: 8 pól (pauza, krótki tik albo długie BZZ) |
+
+Memy:
+- **Bomba: podłożenie**: wpisywanie kodu (7 piknięć) i uzbrojenie.
+- **Bomba: odliczanie**: pikanie coraz szybciej, długi pisk i wybuch (ok. 6 s).
+- **Kliker (pies)**: „klik-klak” jak kliker do szkolenia psa.
+
+**Wszystkie dźwięki są oryginalne**, syntezowane od zera skryptem `scripts/gen_sounds.py`. Memy tylko naśladują znany klimat, np. bomby z gier FPS. W paczce nie ma nagrań z CS:GO ani innych gier i filmów, bo są chronione prawem autorskim.
 
 **Edytor własnych:** w ekranie poziomu „Własny dźwięk” lub „Własna wibracja” naciśnij ✎. Dotknięcie pola przełącza je na następną wartość i od razu je odtwarza. Kroki zapisują się same. `▶` gra całość, `■` zatrzymuje.
 
 ## Uwaga: dźwięk nie jest jeszcze sprawdzony na zegarku
 Odtwarzanie dźwięku (`system.audio`) jest w oficjalnej dokumentacji Vela, ale Xiaomi nie podaje, czy działa na Redmi Watch 4. Na tym zegarku nikt tego jeszcze nie sprawdził. Wibracja (`vibrator.vibrate`) działa, bo została potwierdzona w innej aplikacji.
-- Jeśli zegarek nie odtworzy pliku `.mp3`, aplikacja sama przełączy się na pliki `.wav` i to zapamięta.
+- Jeśli zegarek nie odtworzy pliku `.mp3`, aplikacja sama przełączy się na zapasowe pliki `.wav` i to zapamięta. Plik `.wav` jest tylko w pełnej głośności, więc wtedy całą głośność ustawia odtwarzacz.
 - Jeśli żaden format nie zagra, pod przyciskami pojawi się napis **„Zegarek nie odtworzył dźwięku”**. Wibracje działają wtedy dalej.
 - Aplikacja nie rysuje nic na `canvas` (to restartowało zegarek) i działa tylko, gdy ją otworzysz. Nie ma więc ryzyka restartu w kółko, jak przy tarczy.
 
@@ -63,7 +70,8 @@ Przy każdej nowej wersji zwiększ `versionName` i `versionCode` w `src/manifest
 | `src/manifest.json` | nazwa, pakiet `com.xt.dzwieki`, wersja, uprawnienia (wibracja, audio, pamięć) |
 | `src/pages/index/index.ux` | ekrany (menu, lista, poziom, edytor) i odtwarzanie |
 | `src/common/levels.js` | poziomy 1–1000, przeliczenie na głośność i impulsy wibracji |
-| `src/common/catalog.js` | lista dźwięków i wzorów wibracji |
+| `src/common/catalog.js` | lista dźwięków, memów i wzorów wibracji |
+| `src/common/durations.js` | długości dźwięków (generowane przez `gen_sounds.py`) |
 | `src/common/img/`, `src/common/snd/` | grafiki (napisy jako PNG) i dźwięki |
 | `scripts/` | generatory grafik i dźwięków, podgląd ekranów |
 | `test/` | testy (`npm test`) |
