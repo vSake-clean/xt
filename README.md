@@ -18,4 +18,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
 | [`rw4kalkulator/`](rw4kalkulator/) | Kalkulator naukowy na zegarek Redmi Watch 4: nawiasy, pierwiastki, potęgi, procenty (HyperOS / Xiaomi Vela) | Quick app Vela (JS, `.rpk`) | [`rw4kalkulator/Kalkulator.rpk`](rw4kalkulator/Kalkulator.rpk) |
 | [`swietlik/`](swietlik/) | Świetlik: gra zręcznościowa (tap, przelot między kryształami) na Redmi Watch 4 | Quick app Vela (JS, `.rpk`) | [`swietlik/Swietlik.rpk`](swietlik/Swietlik.rpk) |
-| [`rw4tarcza/`](rw4tarcza/) | Nocna: tarcza na Redmi Watch 4 (godzina, data, kroki, tętno, bateria) | Tarcza Xiaomi (`.bin`) | [`rw4tarcza/Nocna.bin`](rw4tarcza/Nocna.bin) |
+| [`rw4tarcza/`](rw4tarcza/) | Tarcze na Redmi Watch 4: Nocna, Pierścień (cel kroków), Analog | Tarcze Xiaomi (`.bin`) | [`Nocna.bin`](rw4tarcza/Nocna.bin), [`Pierscien.bin`](rw4tarcza/Pierscien.bin), [`Analog.bin`](rw4tarcza/Analog.bin) |

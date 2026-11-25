@@ -2,7 +2,7 @@
 // Używa otwartego packera z projektu Watchface Designer
 // (https://github.com/calinhoria/watchface-designer), czysty JS bez zależności.
 //
-//   node scripts/build.mjs <ścieżka do watchface-designer> [wyjście.bin]
+//   node scripts/build.mjs <ścieżka do watchface-designer> [wyjście.bin] [opis.json]
 import { createRequire } from 'node:module'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -17,7 +17,8 @@ const require = createRequire(import.meta.url)
 const { compileFaceProject } = require(path.resolve(designer, 'core/packer.js'))
 const { unpack } = require(path.resolve(designer, 'core/unpacker.js'))
 
-const face = JSON.parse(fs.readFileSync(new URL('../build/face.json', import.meta.url)))
+const jsonPath = process.argv[4] || new URL('../build/face.json', import.meta.url)
+const face = JSON.parse(fs.readFileSync(jsonPath))
 const raw = (im) => ({ width: im.width, height: im.height, data: Buffer.from(im.rgba, 'base64') })
 const images = {}
 for (const [name, im] of Object.entries(face.images)) images[name] = raw(im)
