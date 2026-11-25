@@ -1,2 +1,4 @@
 /build/*.json
 *.bin.tmp
+/build/fonts/
+/build/img_zolta/
