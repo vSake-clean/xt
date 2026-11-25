@@ -5,7 +5,7 @@ Własne, minimalistyczne tarcze `.bin` dla zegarka **Redmi Watch 4** (390×450):
 | Tarcza | Plik | Co pokazuje |
 |---|---|---|
 | **Nocna** | [`Nocna.bin`](Nocna.bin) | duża godzina 24h, dzień tygodnia po polsku, data, kroki, tętno, bateria |
-| **Żółta** | [`Zolta.bin`](Zolta.bin) | duża godzina (godziny białe, minuty żółte), dzień tygodnia pisany odręcznie po polsku, data, bateria, kroki, kalorie, tętno, stres |
+| **Żółta** | [`Zolta.bin`](Zolta.bin) | duża godzina (godziny białe, minuty żółte), dzień tygodnia po polsku (zmienia się sam), data, bateria, kroki, kalorie, tętno, stres |
 | **Pierścień** | [`Pierscien.bin`](Pierscien.bin) | godzina w środku pierścienia, który zapełnia się wraz z % dziennego celu kroków; data, kroki, tętno, bateria |
 | **Analog** | [`Analog.bin`](Analog.bin) | wskazówki godzin, minut i sekund, kreski minut, dzień tygodnia i dzień miesiąca |
 
@@ -27,7 +27,8 @@ Wymaga Python 3 z Pillow i Node.js. Do pakowania `.bin` używany jest otwarty pa
 git clone https://github.com/calinhoria/watchface-designer ../../watchface-designer
 python3 scripts/gen_face.py      # Nocna -> build/face.json
 python3 scripts/gen_extra.py     # Pierścień i Analog -> build/pierscien.json, build/analog.json
-python3 scripts/gen_zolta.py     # Żółta -> build/zolta.json (pobiera czcionki Rubik i Dancing Script, licencja OFL)
+python3 scripts/gen_zolta.py     # Żółta -> build/zolta.json (pobiera czcionkę Rubik, licencja OFL);
+                                 # inny kolor: gen_zolta.py pomaranczowy|niebieski|zielony|czerwony|bialy
 node scripts/build.mjs ../../watchface-designer Nocna.bin
 node scripts/build.mjs ../../watchface-designer Pierscien.bin build/pierscien.json
 node scripts/build.mjs ../../watchface-designer Analog.bin build/analog.json
