@@ -12,6 +12,8 @@ Własne, minimalistyczne tarcze `.bin` dla zegarka **Redmi Watch 4** (390×450):
 |---|---|---|
 | ![Nocna](podglad.png) | ![Pierścień](podglad-pierscien.png) | ![Analog](podglad-analog.png) |
 
+> **Uwaga (nietestowane, możliwy restart w kółko):** po wgraniu tarczy **Pierścień** lub **Analog** zegarek użytkownika zaczął się restartować w kółko (logo Xiaomi, logo HyperOS, czarny ekran). Przyczyna nie jest jeszcze ustalona. **Nie wgrywaj tych dwóch tarcz**, dopóki nie zostanie to wyjaśnione. Działanie „Nocnej” zostało potwierdzone.
+
 ## Instalacja
 W Notify for Xiaomi wybierz **Device → Watchface** i plik `.bin`. **Nie** używaj „Aktualizacji oprogramowania”, ta opcja służy do firmware'u.
 
