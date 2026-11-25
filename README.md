@@ -16,3 +16,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
+| [`rw4kalkulator/`](rw4kalkulator/) | Kalkulator na zegarek Redmi Watch 4 (HyperOS / Xiaomi Vela) | Quick app Vela (JS, `.rpk`) | [`rw4kalkulator/Kalkulator.rpk`](rw4kalkulator/Kalkulator.rpk) |
