@@ -1,30 +1,32 @@
-# Nocna: tarcza na Redmi Watch 4
+# Tarcze na Redmi Watch 4
 
-Własna tarcza `.bin` dla zegarka **Redmi Watch 4** (390×450).
+Własne, minimalistyczne tarcze `.bin` dla zegarka **Redmi Watch 4** (390×450): biel i szarości na czarnym tle. Grafika jest oryginalna, rysowana skryptami.
 
-![Podgląd tarczy](podglad.png)
+| Tarcza | Plik | Co pokazuje |
+|---|---|---|
+| **Nocna** | [`Nocna.bin`](Nocna.bin) | duża godzina 24h, dzień tygodnia po polsku, data, kroki, tętno, bateria |
+| **Pierścień** | [`Pierscien.bin`](Pierscien.bin) | godzina w środku pierścienia, który zapełnia się wraz z % dziennego celu kroków; data, kroki, tętno, bateria |
+| **Analog** | [`Analog.bin`](Analog.bin) | wskazówki godzin, minut i sekund, kreski minut, dzień tygodnia i dzień miesiąca |
 
-**Gotowy plik:** [`Nocna.bin`](Nocna.bin)
+| Nocna | Pierścień | Analog |
+|---|---|---|
+| ![Nocna](podglad.png) | ![Pierścień](podglad-pierscien.png) | ![Analog](podglad-analog.png) |
 
-## Co pokazuje
-- godzinę w formacie 24h: godziny białe, minuty szare (minimalistyczna biel i szarości);
-- dzień tygodnia po polsku (PON, WT, ŚR…) i datę;
-- kroki, tętno i baterię z ikonami.
-
-Grafika jest oryginalna, rysowana skryptem.
+## Instalacja
+W Notify for Xiaomi wybierz **Device → Watchface** i plik `.bin`. **Nie** używaj „Aktualizacji oprogramowania”, ta opcja służy do firmware'u.
 
 ## Budowanie
 Wymaga Python 3 z Pillow i Node.js. Do pakowania `.bin` używany jest otwarty packer z projektu [Watchface Designer](https://github.com/calinhoria/watchface-designer) (czysty JS, bez dodatkowych pakietów).
 
 ```
 git clone https://github.com/calinhoria/watchface-designer ../../watchface-designer
-python3 scripts/gen_face.py
+python3 scripts/gen_face.py      # Nocna -> build/face.json
+python3 scripts/gen_extra.py     # Pierścień i Analog -> build/pierscien.json, build/analog.json
 node scripts/build.mjs ../../watchface-designer Nocna.bin
+node scripts/build.mjs ../../watchface-designer Pierscien.bin build/pierscien.json
+node scripts/build.mjs ../../watchface-designer Analog.bin build/analog.json
 ```
 
-`gen_face.py` tworzy grafiki w `build/img/`, podgląd `podglad.png` i opis `build/face.json`. `build.mjs` pakuje to do `Nocna.bin`, a potem rozpakowuje wynik, żeby go sprawdzić.
+`build.mjs` po spakowaniu rozpakowuje wynik i sprawdza typ zegarka, tytuł oraz liczbę elementów.
 
-Zamiast `build.mjs` możesz złożyć tarczę w Mi Create (Windows) z gotowych grafik z `build/img/`.
-
-## Instalacja
-W Notify for Xiaomi wybierz **Device → Watchface** i plik `.bin`. **Nie** używaj „Aktualizacji oprogramowania”, ta opcja służy do firmware'u.
+Numery tarcz (`1672100xx`) mają ten sam format co tarcze z oficjalnego kompilatora Mi Create. Przy numerze w innym formacie Notify ostrzegał o niezgodności modelu. Każda tarcza ma własny numer: Nocna 088, Pierścień 089, Analog 090.
