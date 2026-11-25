@@ -19,3 +19,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | [`rw4kalkulator/`](rw4kalkulator/) | Kalkulator naukowy na zegarek Redmi Watch 4: nawiasy, pierwiastki, potęgi, procenty (HyperOS / Xiaomi Vela) | Quick app Vela (JS, `.rpk`) | [`rw4kalkulator/Kalkulator.rpk`](rw4kalkulator/Kalkulator.rpk) |
 | [`swietlik/`](swietlik/) | Świetlik: gra zręcznościowa (tap, przelot między kryształami) na Redmi Watch 4 | Quick app Vela (JS, `.rpk`) | [`swietlik/Swietlik.rpk`](swietlik/Swietlik.rpk) |
 | [`rw4tarcza/`](rw4tarcza/) | Tarcze na Redmi Watch 4: Nocna, Pierścień (cel kroków), Analog | Tarcze Xiaomi (`.bin`) | [`Nocna.bin`](rw4tarcza/Nocna.bin), [`Pierscien.bin`](rw4tarcza/Pierscien.bin), [`Analog.bin`](rw4tarcza/Analog.bin) |
+| [`fw58tla/`](fw58tla/) | Minimalistyczne tła 390×390 do „Własnej tarczy” w FitCloudPro (Maxcom FW58 Vanad Pro) z instrukcją | Obrazy PNG | [`fw58tla/tla/`](fw58tla/tla/) |
