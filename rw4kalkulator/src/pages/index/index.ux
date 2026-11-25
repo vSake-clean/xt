@@ -8,7 +8,7 @@
     </div>
     <div class="pad">
       <div class="row" for="{{ (ri, row) in rows }}">
-        <image class="key" for="{{ (ki, kk) in row }}" src="{{ kk.src }}"
+        <image class="{{ kk.wide ? 'kw' : 'key' }}" for="{{ (ki, kk) in row }}" src="{{ kk.src }}"
                @touchstart="onTouch(kk.k)" @click="onClick(kk.k)"></image>
       </div>
     </div>
@@ -16,7 +16,7 @@
 </template>
 
 <script>
-// Kalkulator na Redmi Watch 4 (Xiaomi Vela).
+// Kalkulator naukowy na Redmi Watch 4 (Xiaomi Vela).
 // Tekst nie jest rysowany przez system, więc wyświetlacz składa się z
 // obrazków-znaków (b_<hex>.png, s_<hex>.png), a przyciski to gotowe PNG.
 import vibrator from '@system.vibrator'
@@ -24,8 +24,8 @@ import { createCalc } from '../../common/calc.js'
 
 const BIG_SLOTS = 12
 const SMALL_SLOTS = 24
-const BIG_OK = '0123456789.-eEro '
-const SMALL_OK = '0123456789.-e+×÷= '
+const BIG_OK = '0123456789.−+×÷^√²!%π()eEro '
+const SMALL_OK = '0123456789.−+×÷^√²!%π()eEro ='
 
 function glyphs(prefix, text, slots, ok) {
   let t = String(text)
@@ -39,8 +39,8 @@ function glyphs(prefix, text, slots, ok) {
   return out
 }
 
-function key(k, file) {
-  return { k: k, src: '/common/img/k_' + file + '.png' }
+function key(k, file, wide) {
+  return { k: k, src: '/common/img/k_' + file + '.png', wide: !!wide }
 }
 
 export default {
@@ -48,11 +48,12 @@ export default {
     exprRow: [],
     dispRow: [],
     rows: [
-      [key('C', 'c'), key('neg', 'neg'), key('%', 'pct'), key('/', 'div')],
-      [key('7', '7'), key('8', '8'), key('9', '9'), key('*', 'mul')],
-      [key('4', '4'), key('5', '5'), key('6', '6'), key('-', 'sub')],
-      [key('1', '1'), key('2', '2'), key('3', '3'), key('+', 'add')],
-      [key('0', '0'), key('.', 'dot'), key('back', 'back'), key('=', 'eq')]
+      [key('C', 'c'), key('(', 'lp'), key(')', 'rp'), key('back', 'back'), key('÷', 'div')],
+      [key('√(', 'sqrt'), key('²', 'sq'), key('^', 'pow'), key('%', 'pct'), key('×', 'mul')],
+      [key('7', '7'), key('8', '8'), key('9', '9'), key('π', 'pi'), key('−', 'sub')],
+      [key('4', '4'), key('5', '5'), key('6', '6'), key('!', 'fact'), key('+', 'add')],
+      [key('1', '1'), key('2', '2'), key('3', '3'), key('1÷(', 'inv'), key('ans', 'ans')],
+      [key('0', '0', true), key('.', 'dot'), key('=', 'eq', true)]
     ]
   },
 
@@ -104,7 +105,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 22px;
+  padding-top: 16px;
   background-color: #000000;
 }
 
@@ -125,8 +126,8 @@ export default {
   height: 44px;
   flex-direction: row;
   justify-content: flex-end;
-  margin-top: 4px;
-  margin-bottom: 10px;
+  margin-top: 2px;
+  margin-bottom: 8px;
 }
 
 .bg {
@@ -135,20 +136,25 @@ export default {
 }
 
 .pad {
-  width: 354px;
+  width: 350px;
   flex-direction: column;
 }
 
 .row {
-  width: 354px;
-  height: 58px;
+  width: 350px;
+  height: 48px;
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .key {
-  width: 84px;
-  height: 58px;
+  width: 66px;
+  height: 48px;
+}
+
+.kw {
+  width: 137px;
+  height: 48px;
 }
 </style>
