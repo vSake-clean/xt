@@ -17,16 +17,17 @@ BUILD = os.path.join(ROOT, "build")
 IMG = os.path.join(BUILD, "img")
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_COND = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+FONT_LIGHT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 W, H = 390, 450
 SS = 4
 
-WHITE = (245, 245, 245, 255)
-ACCENT = (255, 149, 0, 255)
-GRAY = (140, 140, 150, 255)
-BG_TOP = (8, 10, 20)
+WHITE = (240, 240, 240, 255)
+ACCENT = (150, 156, 166, 255)   # chłodna szarość
+GRAY = (90, 94, 102, 255)
+BG_TOP = (0, 0, 0)
 BG_BOT = (0, 0, 0)
-HEART = (255, 70, 90, 255)
-GREEN = (80, 220, 120, 255)
+HEART = (200, 204, 210, 255)
+GREEN = (200, 204, 210, 255)
 
 BIG = (70, 116)
 SMALL = (20, 32)
@@ -66,13 +67,11 @@ def background():
         d.line([(0, y), (W, y)], fill=c + (255,))
     big = Image.new("RGBA", (W * SS, H * SS), (0, 0, 0, 0))
     bd = ImageDraw.Draw(big)
-    # cienki pomarańczowy łuk nad godziną i linia pod nią
-    bd.arc([60 * SS, 40 * SS, 330 * SS, 330 * SS], start=200, end=340,
-           fill=(255, 149, 0, 110), width=3 * SS)
-    bd.line([(70 * SS, 272 * SS), (320 * SS, 272 * SS)], fill=(60, 60, 70, 255), width=2 * SS)
+    # cienka linia pod godziną
+    bd.line([(150 * SS, 272 * SS), (240 * SS, 272 * SS)], fill=(45, 47, 52, 255), width=2 * SS)
     # pionowe separatory między polami na dole
     for x in (135, 255):
-        bd.line([(x * SS, 300 * SS), (x * SS, 370 * SS)], fill=(40, 40, 50, 255), width=2 * SS)
+        bd.line([(x * SS, 300 * SS), (x * SS, 370 * SS)], fill=(28, 29, 33, 255), width=2 * SS)
     img.alpha_composite(big.resize((W, H), Image.LANCZOS))
     add("bg.png", img)
 
@@ -152,11 +151,11 @@ def main():
     for f in os.listdir(IMG):
         os.remove(os.path.join(IMG, f))
     background()
-    hour = digits("h", BIG, 96, WHITE, FONT_COND)
-    minute = digits("m", BIG, 96, ACCENT, FONT_COND)
-    small = digits("s", SMALL, 24, WHITE, FONT_COND)
-    text_cell("colon.png", ":", (30, BIG[1]), 88, GRAY, FONT_COND)
-    text_cell("dot.png", ".", (12, SMALL[1]), 26, WHITE, FONT_COND)
+    hour = digits("h", BIG, 96, WHITE, FONT_LIGHT)
+    minute = digits("m", BIG, 96, ACCENT, FONT_LIGHT)
+    small = digits("s", SMALL, 24, (200, 204, 210, 255), FONT_LIGHT)
+    text_cell("colon.png", ":", (30, BIG[1]), 88, GRAY, FONT_LIGHT)
+    text_cell("dot.png", ".", (12, SMALL[1]), 26, (200, 204, 210, 255), FONT_LIGHT)
     days = ["NDZ", "PON", "WT", "ŚR", "CZW", "PT", "SOB"]  # 0 = niedziela
     wd = []
     for i, t in enumerate(days):
