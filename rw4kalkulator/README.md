@@ -2,7 +2,7 @@
 
 Kalkulator naukowy jako „szybka aplikacja” (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela).
 
-![Podgląd ekranu](podglad.png)
+![Podgląd: wszystkie klawisze, tylko √ i %, ustawienia](podglad.png)
 
 **Gotowa paczka:** [`Kalkulator.rpk`](Kalkulator.rpk)
 
@@ -30,7 +30,16 @@ Kalkulator liczy **całe wyrażenia** z zachowaniem kolejności działań, a nie
 - Niepoprawne wyrażenie, dzielenie przez zero albo pierwiastek z liczby ujemnej wyświetla `Error`.
 - Krótka wibracja przy każdym naciśnięciu.
 
-**Aktualizacja z wersji 1.x:** najpierw usuń stary Kalkulator z zegarka, potem wgraj nowy plik. Notify nie nadpisuje zainstalowanej aplikacji.
+## Ustawienia (wersja 2.1)
+Ikona zębatki w lewym górnym rogu otwiera ustawienia. Na dwóch stronach (przyciski `◀` `▶`) można włączać i wyłączać:
+
+- klawisze naukowe: nawiasy `( )`, `√`, `x²`, `xʸ`, `%`, `n!`, `π`, `1/x`, `Ans`;
+- **Podgląd wyniku**, czyli wynik na żywo w szarej linii;
+- **Wibrację** przy naciśnięciu.
+
+Przycisk **Gotowe** zapisuje wybór w pamięci zegarka i wraca do kalkulatora. Klawiatura sama się przebudowuje: bez klawiszy naukowych zostaje sama podstawowa klawiatura z dużymi przyciskami. Cyfry, `+ − × ÷`, `=`, `.`, `C` i `⌫` są zawsze widoczne.
+
+**Aktualizacja ze starszej wersji:** najpierw usuń stary Kalkulator z zegarka, potem wgraj nowy plik. Notify nie nadpisuje zainstalowanej aplikacji.
 
 ## Instalacja (Notify for Xiaomi)
 Potrzebny jest **telefon z Androidem**, bo z iPhone'a nie da się wgrać pliku `.rpk`.
@@ -68,6 +77,7 @@ Przy każdej nowej wersji zwiększ `versionName` i `versionCode` w `src/manifest
 | `src/manifest.json` | nazwa, pakiet `com.xt.rw4kalkulator`, wersja |
 | `src/pages/index/index.ux` | ekran i obsługa dotyku |
 | `src/common/calc.js` | logika kalkulatora |
+| `src/common/layout.js` | układ klawiatury zależny od ustawień |
 | `src/common/img/` | grafiki przycisków i znaków |
 | `scripts/gen_assets.py` | generator grafik |
-| `test/calc.test.mjs` | testy |
+| `test/*.test.mjs` | testy (`npm test`) |
