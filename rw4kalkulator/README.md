@@ -1,20 +1,36 @@
 # Kalkulator na Redmi Watch 4
 
-Prosty kalkulator jako „szybka aplikacja” (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela).
+Kalkulator naukowy jako „szybka aplikacja” (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela).
 
 ![Podgląd ekranu](podglad.png)
 
 **Gotowa paczka:** [`Kalkulator.rpk`](Kalkulator.rpk)
 
-## Funkcje
-- Dodawanie, odejmowanie, mnożenie, dzielenie (`÷ × − +`).
-- `C` czyści wszystko, `⌫` kasuje ostatnią cyfrę, `±` zmienia znak.
-- `%`: samodzielnie dzieli przez 100. Po `+` lub `−` liczy procent pierwszej liczby, np. `200 + 10 %` daje `20`, a `=` daje `220`.
-- Ponowne `=` powtarza ostatnie działanie (`2 + 3 = =` daje `8`).
-- Górna szara linia pokazuje bieżące działanie, np. `12 + 3 =`.
-- Dzielenie przez zero wyświetla `Error`, a następny klawisz zaczyna od nowa.
-- Wynik ma do 12 znaków. Większe i bardzo małe liczby są w zapisie wykładniczym, np. `1e13`.
+## Funkcje (wersja 2.0)
+Kalkulator liczy **całe wyrażenia** z zachowaniem kolejności działań, a nie tylko po jednym kroku.
+
+| Klawisz | Działanie | Przykład |
+|---|---|---|
+| `+ − × ÷` | cztery działania, mnożenie i dzielenie przed dodawaniem | `2+3×4` = 14 |
+| `( )` | nawiasy, brakujące `)` domyka się samo przy `=` | `(2+3)×4` = 20 |
+| `√` | pierwiastek kwadratowy, wstawia `√(` | `√(16)` = 4 |
+| `x²` | kwadrat | `3²` = 9 |
+| `xʸ` | dowolna potęga `^` | `2^10` = 1024 |
+| `%` | procent; po `+`/`−` liczy procent poprzedniej liczby | `200+10%` = 220, `50%` = 0.5 |
+| `n!` | silnia | `5!` = 120 |
+| `π` | liczba pi | `2π` = 6.283… |
+| `1/x` | odwrotność, wstawia `1÷(` | `1÷(4)` = 0.25 |
+| `Ans` | wstawia ostatni wynik | |
+| `⌫` / `C` | kasowanie ostatniego elementu / wszystkiego | |
+
+- Działa mnożenie domyślne: `2π`, `3(4+1)`, `2√(9)`.
+- Liczby ujemne wpisuje się klawiszem `−`, np. `(−2)^2` = 4, a `−2^2` = −4.
+- Mała szara linia na górze pokazuje **wynik na żywo** podczas wpisywania, a po `=` całe działanie.
+- Po `=` naciśnięcie operatora liczy dalej od wyniku, a cyfra zaczyna nowe działanie.
+- Niepoprawne wyrażenie, dzielenie przez zero albo pierwiastek z liczby ujemnej wyświetla `Error`.
 - Krótka wibracja przy każdym naciśnięciu.
+
+**Aktualizacja z wersji 1.x:** najpierw usuń stary Kalkulator z zegarka, potem wgraj nowy plik. Notify nie nadpisuje zainstalowanej aplikacji.
 
 ## Instalacja (Notify for Xiaomi)
 Potrzebny jest **telefon z Androidem**, bo z iPhone'a nie da się wgrać pliku `.rpk`.
