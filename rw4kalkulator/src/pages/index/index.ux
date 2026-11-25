@@ -1,0 +1,154 @@
+<template>
+  <div class="app">
+    <div class="expr">
+      <image class="sg" for="{{ exprRow }}" src="{{ $item }}"></image>
+    </div>
+    <div class="disp">
+      <image class="bg" for="{{ dispRow }}" src="{{ $item }}"></image>
+    </div>
+    <div class="pad">
+      <div class="row" for="{{ (ri, row) in rows }}">
+        <image class="key" for="{{ (ki, kk) in row }}" src="{{ kk.src }}"
+               @touchstart="onTouch(kk.k)" @click="onClick(kk.k)"></image>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+// Kalkulator na Redmi Watch 4 (Xiaomi Vela).
+// Tekst nie jest rysowany przez system, więc wyświetlacz składa się z
+// obrazków-znaków (b_<hex>.png, s_<hex>.png), a przyciski to gotowe PNG.
+import vibrator from '@system.vibrator'
+import { createCalc } from '../../common/calc.js'
+
+const BIG_SLOTS = 12
+const SMALL_SLOTS = 24
+const BIG_OK = '0123456789.-eEro '
+const SMALL_OK = '0123456789.-e+×÷= '
+
+function glyphs(prefix, text, slots, ok) {
+  let t = String(text)
+  if (t.length > slots) t = t.slice(t.length - slots)
+  while (t.length < slots) t = ' ' + t
+  const out = []
+  for (let i = 0; i < t.length; i++) {
+    const c = ok.indexOf(t.charAt(i)) >= 0 ? t.charAt(i) : ' '
+    out.push('/common/img/' + prefix + '_' + c.charCodeAt(0).toString(16) + '.png')
+  }
+  return out
+}
+
+function key(k, file) {
+  return { k: k, src: '/common/img/k_' + file + '.png' }
+}
+
+export default {
+  private: {
+    exprRow: [],
+    dispRow: [],
+    rows: [
+      [key('C', 'c'), key('neg', 'neg'), key('%', 'pct'), key('/', 'div')],
+      [key('7', '7'), key('8', '8'), key('9', '9'), key('*', 'mul')],
+      [key('4', '4'), key('5', '5'), key('6', '6'), key('-', 'sub')],
+      [key('1', '1'), key('2', '2'), key('3', '3'), key('+', 'add')],
+      [key('0', '0'), key('.', 'dot'), key('back', 'back'), key('=', 'eq')]
+    ]
+  },
+
+  onInit() {
+    this._calc = createCalc()
+    this._touch = null
+    this.exprRow = glyphs('s', '', SMALL_SLOTS, SMALL_OK)
+    this.dispRow = glyphs('b', '0', BIG_SLOTS, BIG_OK)
+  },
+
+  // System może wysłać touchstart i click dla tego samego dotknięcia.
+  // Click tuż po touchstart tego samego klawisza jest ignorowany.
+  onTouch(k) {
+    this._touch = { k: k, t: Date.now() }
+    this._press(k)
+  },
+
+  onClick(k) {
+    const t = this._touch
+    if (t && t.k === k && Date.now() - t.t < 700) return
+    this._press(k)
+  },
+
+  _press(k) {
+    this._calc.press(k)
+    this._update(this.exprRow, glyphs('s', this._calc.expr, SMALL_SLOTS, SMALL_OK))
+    this._update(this.dispRow, glyphs('b', this._calc.display, BIG_SLOTS, BIG_OK))
+    try {
+      vibrator.vibrate({ mode: 'short' })
+    } catch (e) {}
+  },
+
+  // Jedna zmiana tablicy na listę (szybsze odświeżanie na zegarku).
+  _update(arr, next) {
+    let same = arr.length === next.length
+    for (let i = 0; same && i < next.length; i++) {
+      if (arr[i] !== next[i]) same = false
+    }
+    if (same) return
+    Array.prototype.splice.apply(arr, [0, arr.length].concat(next))
+  }
+}
+</script>
+
+<style>
+.app {
+  width: 390px;
+  height: 450px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 22px;
+  background-color: #000000;
+}
+
+.expr {
+  width: 312px;
+  height: 22px;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.sg {
+  width: 13px;
+  height: 22px;
+}
+
+.disp {
+  width: 312px;
+  height: 44px;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.bg {
+  width: 26px;
+  height: 44px;
+}
+
+.pad {
+  width: 354px;
+  flex-direction: column;
+}
+
+.row {
+  width: 354px;
+  height: 58px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.key {
+  width: 84px;
+  height: 58px;
+}
+</style>
