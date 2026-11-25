@@ -7,7 +7,7 @@ Własna tarcza `.bin` dla zegarka **Redmi Watch 4** (390×450).
 **Gotowy plik:** [`Nocna.bin`](Nocna.bin)
 
 ## Co pokazuje
-- godzinę w formacie 24h: godziny białe, minuty pomarańczowe;
+- godzinę w formacie 24h: godziny białe, minuty szare (minimalistyczna biel i szarości);
 - dzień tygodnia po polsku (PON, WT, ŚR…) i datę;
 - kroki, tętno i baterię z ikonami.
 
