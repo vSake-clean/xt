@@ -1,31 +1,77 @@
 <template>
   <div class="app">
-    <div class="expr">
-      <image class="sg" for="{{ exprRow }}" src="{{ $item }}"></image>
+    <!-- Kalkulator -->
+    <div class="calc" if="{{ mode === 'calc' }}">
+      <div class="top">
+        <div class="gearbox" @touchstart="hit('gear')" @click="hit('gear')">
+          <image class="gear" src="/common/img/gear.png"
+                 @touchstart="hit('gear')" @click="hit('gear')"></image>
+        </div>
+        <div class="expr">
+          <image class="sg" for="{{ exprRow }}" src="{{ $item }}"></image>
+        </div>
+      </div>
+      <div class="disp">
+        <image class="bg" for="{{ dispRow }}" src="{{ $item }}"></image>
+      </div>
+      <div class="pad">
+        <div class="row" for="{{ (ri, row) in rows }}">
+          <div class="key" for="{{ (ki, kk) in row }}"
+               style="width: {{ kk.w }}px; height: {{ kk.h }}px; border-radius: {{ kk.h / 2 }}px; background-color: {{ kk.bg }};"
+               @touchstart="hit(kk.k)" @click="hit(kk.k)">
+            <image class="lbl" src="{{ kk.label }}"
+                   @touchstart="hit(kk.k)" @click="hit(kk.k)"></image>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="disp">
-      <image class="bg" for="{{ dispRow }}" src="{{ $item }}"></image>
-    </div>
-    <div class="pad">
-      <div class="row" for="{{ (ri, row) in rows }}">
-        <image class="{{ kk.wide ? 'kw' : 'key' }}" for="{{ (ki, kk) in row }}" src="{{ kk.src }}"
-               @touchstart="onTouch(kk.k)" @click="onClick(kk.k)"></image>
+
+    <!-- Ustawienia -->
+    <div class="set" if="{{ mode === 'settings' }}">
+      <image class="stitle" src="/common/img/t_settings.png"></image>
+      <div class="opt" for="{{ optRows }}"
+           @touchstart="hit('o:' + $item.i)" @click="hit('o:' + $item.i)">
+        <image class="olbl" src="{{ $item.img }}"
+               @touchstart="hit('o:' + $item.i)" @click="hit('o:' + $item.i)"></image>
+        <image class="sw" src="{{ $item.sw }}"
+               @touchstart="hit('o:' + $item.i)" @click="hit('o:' + $item.i)"></image>
+      </div>
+      <div class="nav">
+        <div class="nbtn" @touchstart="hit('prev')" @click="hit('prev')">
+          <image class="nimg" src="/common/img/t_prev.png"
+                 @touchstart="hit('prev')" @click="hit('prev')"></image>
+        </div>
+        <image class="pg" src="{{ pageImg }}"></image>
+        <div class="done" @touchstart="hit('done')" @click="hit('done')">
+          <image class="dimg" src="/common/img/t_done.png"
+                 @touchstart="hit('done')" @click="hit('done')"></image>
+        </div>
+        <div class="nbtn" @touchstart="hit('next')" @click="hit('next')">
+          <image class="nimg" src="/common/img/t_next.png"
+                 @touchstart="hit('next')" @click="hit('next')"></image>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-// Kalkulator naukowy na Redmi Watch 4 (Xiaomi Vela).
+// Kalkulator naukowy na Redmi Watch 4 (Xiaomi Vela) z ekranem ustawień.
 // Tekst nie jest rysowany przez system, więc wyświetlacz składa się z
-// obrazków-znaków (b_<hex>.png, s_<hex>.png), a przyciski to gotowe PNG.
+// obrazków-znaków (b_<hex>.png, s_<hex>.png), a napisy na klawiszach to PNG.
+// Ustawienia (które klawisze widać, podgląd wyniku, wibracja) są zapisane
+// w @system.storage pod kluczem "cfg".
 import vibrator from '@system.vibrator'
+import storage from '@system.storage'
 import { createCalc } from '../../common/calc.js'
+import { OPTIONS, buildRows, defaultConfig, normalizeConfig } from '../../common/layout.js'
 
 const BIG_SLOTS = 12
-const SMALL_SLOTS = 24
-const BIG_OK = '0123456789.−+×÷^√²!%π()eEro '
-const SMALL_OK = '0123456789.−+×÷^√²!%π()eEro ='
+const SMALL_SLOTS = 20
+const GLYPHS = '0123456789.−+×÷^√²!%π()eEro '
+const SMALL_OK = GLYPHS + '='
+const PER_PAGE = 6
+const PAGES = Math.ceil(OPTIONS.length / PER_PAGE)
 
 function glyphs(prefix, text, slots, ok) {
   let t = String(text)
@@ -39,54 +85,106 @@ function glyphs(prefix, text, slots, ok) {
   return out
 }
 
-function key(k, file, wide) {
-  return { k: k, src: '/common/img/k_' + file + '.png', wide: !!wide }
-}
-
 export default {
   private: {
+    mode: 'calc',
     exprRow: [],
     dispRow: [],
-    rows: [
-      [key('C', 'c'), key('(', 'lp'), key(')', 'rp'), key('back', 'back'), key('÷', 'div')],
-      [key('√(', 'sqrt'), key('²', 'sq'), key('^', 'pow'), key('%', 'pct'), key('×', 'mul')],
-      [key('7', '7'), key('8', '8'), key('9', '9'), key('π', 'pi'), key('−', 'sub')],
-      [key('4', '4'), key('5', '5'), key('6', '6'), key('!', 'fact'), key('+', 'add')],
-      [key('1', '1'), key('2', '2'), key('3', '3'), key('1÷(', 'inv'), key('ans', 'ans')],
-      [key('0', '0', true), key('.', 'dot'), key('=', 'eq', true)]
-    ]
+    rows: [],
+    optRows: [],
+    page: 0,
+    pageImg: '/common/img/t_p1.png'
   },
 
   onInit() {
     this._calc = createCalc()
-    this._touch = null
-    this.exprRow = glyphs('s', '', SMALL_SLOTS, SMALL_OK)
-    this.dispRow = glyphs('b', '0', BIG_SLOTS, BIG_OK)
-  },
-
-  // System może wysłać touchstart i click dla tego samego dotknięcia.
-  // Click tuż po touchstart tego samego klawisza jest ignorowany.
-  onTouch(k) {
-    this._touch = { k: k, t: Date.now() }
-    this._press(k)
-  },
-
-  onClick(k) {
-    const t = this._touch
-    if (t && t.k === k && Date.now() - t.t < 700) return
-    this._press(k)
-  },
-
-  _press(k) {
-    this._calc.press(k)
-    this._update(this.exprRow, glyphs('s', this._calc.expr, SMALL_SLOTS, SMALL_OK))
-    this._update(this.dispRow, glyphs('b', this._calc.display, BIG_SLOTS, BIG_OK))
+    this._cfg = defaultConfig()
+    this._last = { id: '', t: 0 }
+    this.rows = buildRows(this._cfg)
+    this._refresh()
+    const self = this
     try {
-      vibrator.vibrate({ mode: 'short' })
+      storage.get({
+        key: 'cfg',
+        success: function (data) {
+          if (!data) return
+          try {
+            self._cfg = normalizeConfig(JSON.parse(data))
+            self.rows = buildRows(self._cfg)
+            self._refresh()
+          } catch (e) {}
+        }
+      })
     } catch (e) {}
   },
 
-  // Jedna zmiana tablicy na listę (szybsze odświeżanie na zegarku).
+  // Jedno dotknięcie może dać touchstart i click, na napisie i na klawiszu.
+  // Powtórzenie tego samego id w ciągu 300 ms jest ignorowane.
+  hit(id) {
+    const now = Date.now()
+    if (this._last.id === id && now - this._last.t < 300) return
+    this._last = { id: id, t: now }
+    if (this._cfg.vib) {
+      try {
+        vibrator.vibrate({ mode: 'short' })
+      } catch (e) {}
+    }
+    if (id === 'gear') return this._openSettings()
+    if (id === 'done') return this._closeSettings()
+    if (id === 'prev' || id === 'next') {
+      const p = this.page + (id === 'next' ? 1 : -1)
+      if (p >= 0 && p < PAGES) this._showPage(p)
+      return
+    }
+    if (id.indexOf('o:') === 0) return this._toggle(parseInt(id.slice(2), 10))
+    this._calc.press(id)
+    this._refresh()
+  },
+
+  _refresh() {
+    let e = this._calc.expr
+    if (!this._cfg.prev && e.charAt(0) === '=') e = ''
+    this._update(this.exprRow, glyphs('s', e, SMALL_SLOTS, SMALL_OK))
+    this._update(this.dispRow, glyphs('b', this._calc.display, BIG_SLOTS, GLYPHS))
+  },
+
+  _openSettings() {
+    this._showPage(0)
+    this.mode = 'settings'
+  },
+
+  _closeSettings() {
+    try {
+      storage.set({ key: 'cfg', value: JSON.stringify(this._cfg) })
+    } catch (e) {}
+    this.rows = buildRows(this._cfg)
+    this.exprRow = []
+    this.dispRow = []
+    this.mode = 'calc'
+    this._refresh()
+  },
+
+  _showPage(p) {
+    this.page = p
+    this.pageImg = '/common/img/t_p' + (p + 1) + '.png'
+    const list = []
+    for (let i = p * PER_PAGE; i < Math.min(OPTIONS.length, (p + 1) * PER_PAGE); i++) {
+      list.push({
+        i: i,
+        img: '/common/img/' + OPTIONS[i].img + '.png',
+        sw: '/common/img/' + (this._cfg[OPTIONS[i].id] ? 'sw_on' : 'sw_off') + '.png'
+      })
+    }
+    this.optRows = list
+  },
+
+  _toggle(i) {
+    const o = OPTIONS[i]
+    if (!o) return
+    this._cfg[o.id] = !this._cfg[o.id]
+    this._showPage(this.page)
+  },
+
   _update(arr, next) {
     let same = arr.length === next.length
     for (let i = 0; same && i < next.length; i++) {
@@ -102,15 +200,39 @@ export default {
 .app {
   width: 390px;
   height: 450px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 16px;
   background-color: #000000;
 }
 
+.calc {
+  width: 390px;
+  height: 450px;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.top {
+  width: 330px;
+  height: 34px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gearbox {
+  width: 60px;
+  height: 34px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.gear {
+  width: 34px;
+  height: 34px;
+}
+
 .expr {
-  width: 312px;
+  width: 260px;
   height: 22px;
   flex-direction: row;
   justify-content: flex-end;
@@ -127,7 +249,7 @@ export default {
   flex-direction: row;
   justify-content: flex-end;
   margin-top: 2px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .bg {
@@ -142,19 +264,100 @@ export default {
 
 .row {
   width: 350px;
-  height: 48px;
   flex-direction: row;
   justify-content: space-between;
   margin-bottom: 5px;
 }
 
 .key {
-  width: 66px;
-  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
-.kw {
-  width: 137px;
+.lbl {
+  width: 56px;
+  height: 34px;
+}
+
+.set {
+  width: 390px;
+  height: 450px;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+}
+
+.stitle {
+  width: 300px;
+  height: 40px;
+  margin-bottom: 6px;
+}
+
+.opt {
+  width: 340px;
   height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 14px;
+  background-color: #1c1c1e;
+}
+
+.olbl {
+  width: 240px;
+  height: 40px;
+}
+
+.sw {
+  width: 64px;
+  height: 36px;
+}
+
+.nav {
+  width: 340px;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.nbtn {
+  width: 64px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #333333;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.nimg {
+  width: 56px;
+  height: 34px;
+}
+
+.pg {
+  width: 50px;
+  height: 30px;
+}
+
+.done {
+  width: 120px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #ff9500;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.dimg {
+  width: 110px;
+  height: 34px;
 }
 </style>
