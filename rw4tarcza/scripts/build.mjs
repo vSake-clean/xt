@@ -33,7 +33,11 @@ fs.writeFileSync(out, bin)
 
 // weryfikacja: rozpakuj i porównaj podstawowe dane
 const re = unpack(bin)
-const ok = re.version === 2 && re.watchType === face.deviceType && re.title === face.title &&
+// Numer tarczy w stylu oficjalnego kompilatora (1672100xx) sprawia, że
+// unpacker rozpoznaje typ 7 (ekran 390x450, jak działające tarcze z Mi Create
+// dla Redmi Watch 4), a numer zaczynający się od 365 daje typ 365.
+const sameScreen = [face.deviceType, 7]
+const ok = re.version === 2 && sameScreen.includes(re.watchType) && re.title === face.title &&
   re.slots.length === 1
 console.log('zapisano', out, bin.length, 'B; wersja', re.version, '; zegarek', re.watchType,
   '; tytuł', JSON.stringify(re.title), '; widgety', re.slots[0].widgets.length)

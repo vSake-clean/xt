@@ -211,7 +211,7 @@ def main():
     face = {
         "deviceType": 365,
         "title": "Nocna",
-        "faceId": "365802511",
+        "faceId": "167210088",
         "widgets": [{k: v for k, v in w.items() if not k.startswith("_")} for w in widgets],
         "images": images,
         "preview": {"width": pv.width, "height": pv.height,
