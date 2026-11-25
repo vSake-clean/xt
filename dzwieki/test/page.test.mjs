@@ -11,6 +11,7 @@ script = script
   .replace("import vibrator from '@system.vibrator'", 'const vibrator = globalThis.__mocks.vibrator')
   .replace("import audio from '@system.audio'", 'const audio = globalThis.__mocks.audio')
   .replace("import storage from '@system.storage'", 'const storage = globalThis.__mocks.storage')
+  .replace("import { FOTO_COUNT } from '../../common/fotos.js'", 'const FOTO_COUNT = globalThis.__fotoCount')
   .split('../../common/').join(path.join(root, 'src/common/') )
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dzwieki-'))
 const file = path.join(tmp, 'page.mjs')
@@ -54,9 +55,15 @@ globalThis.__mocks = {
   }
 }
 
+globalThis.__fotoCount = 3
 const page = (await import(file)).default
-function mount() {
-  const vm = Object.assign({}, page, JSON.parse(JSON.stringify(page.private)))
+// druga kopia ekranu: paczka bez zdjęć (jak w repozytorium)
+const file0 = path.join(tmp, 'page0.mjs')
+fs.writeFileSync(file0, script.replace('const FOTO_COUNT = globalThis.__fotoCount', 'const FOTO_COUNT = 0'))
+const page0 = (await import(file0)).default
+function mount(pg) {
+  pg = pg || page
+  const vm = Object.assign({}, pg, JSON.parse(JSON.stringify(pg.private)))
   vm.onInit()
   return vm
 }
@@ -266,6 +273,36 @@ t('memy: bomba gra cicho, ma własny poziom i 4 strony', () => {
   assert.equal(vm.rows[0].name, '/common/img/n_m_smiech.png')
   tap(vm, 'next')
   assert.equal(vm.pageImg, '/common/img/p_4_4.png')
+})
+
+t('zdjęcia: przeglądanie w kółko i licznik', () => {
+  const vm = mount()
+  tap(vm, 'foto')
+  assert.equal(vm.mode, 'foto')
+  assert.equal(vm.fotoCount, 3)
+  assert.equal(vm.fotoSrc, '/common/foto/1.jpg')
+  assert.deepEqual(vm.fotoNum, ['k_1', 'k_sl', 'k_3'].map((x) => '/common/img/' + x + '.png'))
+  tap(vm, 'fnext')
+  assert.equal(vm.fotoSrc, '/common/foto/2.jpg')
+  tap(vm, 'fnext')
+  tap(vm, 'fnext')
+  assert.equal(vm.fotoSrc, '/common/foto/1.jpg')
+  tap(vm, 'fprev')
+  assert.equal(vm.fotoSrc, '/common/foto/3.jpg')
+  assert.equal(vm.onBackPress(), true)
+  assert.equal(vm.mode, 'menu')
+})
+
+t('zdjęcia: paczka bez zdjęć pokazuje pusty ekran', () => {
+  const vm = mount(page0)
+  tap(vm, 'foto')
+  assert.equal(vm.mode, 'foto')
+  assert.equal(vm.fotoCount, 0)
+  assert.equal(vm.fotoSrc, '')
+  tap(vm, 'fnext')
+  assert.equal(vm.fotoSrc, '')
+  tap(vm, 'back')
+  assert.equal(vm.mode, 'menu')
 })
 
 t('przycisk wstecz zegarka', () => {

@@ -25,6 +25,7 @@ GRAY = (142, 142, 147, 255)
 TEAL = (76, 215, 200, 255)
 LAV = (179, 157, 250, 255)
 AMBER = (255, 179, 64, 255)
+PINK = (255, 120, 170, 255)
 RED = (255, 105, 97, 255)
 DARK = (0, 0, 0, 255)
 
@@ -141,17 +142,30 @@ def bomb_icon(d, x, y, s, color):
                width=int(s * 0.03))
 
 
+def photo_icon(d, x, y, s, color):
+    """Ramka zdjęcia z górami i słońcem."""
+    w, h = s * 0.92, s * 0.72
+    x0, y0 = x + (s - w) / 2, y + (s - h) / 2
+    d.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=s * 0.08, outline=color, width=int(s * 0.07))
+    d.polygon([(x0 + w * 0.1, y0 + h * 0.85), (x0 + w * 0.38, y0 + h * 0.4), (x0 + w * 0.6, y0 + h * 0.85)],
+              fill=color)
+    d.polygon([(x0 + w * 0.45, y0 + h * 0.85), (x0 + w * 0.66, y0 + h * 0.55), (x0 + w * 0.9, y0 + h * 0.85)],
+              fill=color)
+    r = s * 0.08
+    d.ellipse([x0 + w * 0.72 - r, y0 + h * 0.3 - r, x0 + w * 0.72 + r, y0 + h * 0.3 + r], fill=color)
+
+
 def menu_tile(name, label, color, kind):
-    box = (300, 84)
+    """Kafelek siatki 2x2: ikona na górze, napis pod spodem."""
+    box = (150, 130)
     img, d = canvas(box)
-    s = 62 * SS
-    if kind == "s":
-        speaker(d, 18 * SS, 11 * SS, s, color, waves=2)
-    elif kind == "m":
-        bomb_icon(d, 16 * SS, 11 * SS, s, color)
-    else:
-        vibe_icon(d, 14 * SS, 11 * SS, s, color)
-    d.text((96 * SS, 42 * SS), label, font=font(FONT_BOLD, 32 * SS), fill=WHITE, anchor="lm")
+    s = 66 * SS
+    x, y = (box[0] * SS - s) / 2, 12 * SS
+    {"s": lambda: speaker(d, x + 4 * SS, y, s, color, waves=2),
+     "m": lambda: bomb_icon(d, x, y, s, color),
+     "v": lambda: vibe_icon(d, x, y, s, color),
+     "f": lambda: photo_icon(d, x, y, s, color)}[kind]()
+    d.text((box[0] * SS / 2, 106 * SS), label, font=font(FONT_BOLD, 24 * SS), fill=WHITE, anchor="mm")
     save(img, name, box)
 
 
@@ -236,6 +250,13 @@ def main():
     menu_tile("m_snd.png", "Dźwięki", TEAL, "s")
     menu_tile("m_mem.png", "Memy", AMBER, "m")
     menu_tile("m_vib.png", "Wibracje", LAV, "v")
+    menu_tile("m_foto.png", "Zdjęcia", PINK, "f")
+
+    # zdjęcia
+    text("h_f.png", "Zdjęcia", (230, 40), 28, PINK, bold=True, align="left")
+    text("t_nofoto.png", "Brak zdjęć w tej paczce", (330, 34), 22, WHITE)
+    text("t_nofoto2.png", "Zdjęcia dodaje się przy budowaniu", (330, 26), 17, GRAY)
+    text("k_sl.png", "/", DIG_SMALL, 20, GRAY)
 
     # nagłówki list i nazwy
     text("h_s.png", "Dźwięki", (230, 40), 28, TEAL, bold=True, align="left")

@@ -3,17 +3,25 @@
     <!-- Menu -->
     <div class="menu" if="{{ mode === 'menu' }}">
       <image class="title" src="/common/img/t_title.png"></image>
-      <div class="tile" @touchstart="hit('kind:s')" @click="hit('kind:s')">
-        <image class="tileimg" src="/common/img/m_snd.png"
-               @touchstart="hit('kind:s')" @click="hit('kind:s')"></image>
+      <div class="tiles">
+        <div class="tile" @touchstart="hit('kind:s')" @click="hit('kind:s')">
+          <image class="tileimg" src="/common/img/m_snd.png"
+                 @touchstart="hit('kind:s')" @click="hit('kind:s')"></image>
+        </div>
+        <div class="tile" @touchstart="hit('kind:m')" @click="hit('kind:m')">
+          <image class="tileimg" src="/common/img/m_mem.png"
+                 @touchstart="hit('kind:m')" @click="hit('kind:m')"></image>
+        </div>
       </div>
-      <div class="tile" @touchstart="hit('kind:m')" @click="hit('kind:m')">
-        <image class="tileimg" src="/common/img/m_mem.png"
-               @touchstart="hit('kind:m')" @click="hit('kind:m')"></image>
-      </div>
-      <div class="tile" @touchstart="hit('kind:v')" @click="hit('kind:v')">
-        <image class="tileimg" src="/common/img/m_vib.png"
-               @touchstart="hit('kind:v')" @click="hit('kind:v')"></image>
+      <div class="tiles">
+        <div class="tile" @touchstart="hit('kind:v')" @click="hit('kind:v')">
+          <image class="tileimg" src="/common/img/m_vib.png"
+                 @touchstart="hit('kind:v')" @click="hit('kind:v')"></image>
+        </div>
+        <div class="tile" @touchstart="hit('foto')" @click="hit('foto')">
+          <image class="tileimg" src="/common/img/m_foto.png"
+                 @touchstart="hit('foto')" @click="hit('foto')"></image>
+        </div>
       </div>
     </div>
 
@@ -114,6 +122,38 @@
       <image class="err" if="{{ err }}" src="/common/img/t_err.png"></image>
     </div>
 
+    <!-- Zdjęcia -->
+    <div class="scr" if="{{ mode === 'foto' }}">
+      <div class="head">
+        <div class="back" @touchstart="hit('back')" @click="hit('back')">
+          <image class="backimg" src="/common/img/i_back.png"
+                 @touchstart="hit('back')" @click="hit('back')"></image>
+        </div>
+        <image class="htitle" src="/common/img/h_f.png"></image>
+      </div>
+      <div class="fbox" if="{{ fotoCount > 0 }}" @touchstart="hit('fnext')" @click="hit('fnext')">
+        <image class="foto" src="{{ fotoSrc }}"
+               @touchstart="hit('fnext')" @click="hit('fnext')"></image>
+      </div>
+      <div class="nav" if="{{ fotoCount > 0 }}">
+        <div class="nbtn" @touchstart="hit('fprev')" @click="hit('fprev')">
+          <image class="nimg" src="/common/img/i_prev.png"
+                 @touchstart="hit('fprev')" @click="hit('fprev')"></image>
+        </div>
+        <div class="fcnt">
+          <image class="kd" for="{{ fotoNum }}" src="{{ $item }}"></image>
+        </div>
+        <div class="nbtn" @touchstart="hit('fnext')" @click="hit('fnext')">
+          <image class="nimg" src="/common/img/i_next.png"
+                 @touchstart="hit('fnext')" @click="hit('fnext')"></image>
+        </div>
+      </div>
+      <div class="nofoto" if="{{ fotoCount === 0 }}">
+        <image class="nofoto1" src="/common/img/t_nofoto.png"></image>
+        <image class="nofoto2" src="/common/img/t_nofoto2.png"></image>
+      </div>
+    </div>
+
     <!-- Edytor własnego dźwięku / wibracji -->
     <div class="scr" if="{{ mode === 'edit' }}">
       <div class="head">
@@ -168,6 +208,7 @@ import {
 } from '../../common/levels.js'
 import { DEFAULT_NOTES, DEFAULT_VIBE, PER_PAGE, itemsOf, pagesOf, levelKey } from '../../common/catalog.js'
 import { DURATIONS } from '../../common/durations.js'
+import { FOTO_COUNT } from '../../common/fotos.js'
 
 const IMG = '/common/img/'
 const TEAL = '#4cd7c8'
@@ -206,7 +247,10 @@ export default {
     custom: false,
     err: false,
     cellsA: [],
-    cellsB: []
+    cellsB: [],
+    fotoCount: FOTO_COUNT,
+    fotoSrc: '',
+    fotoNum: []
   },
 
   onInit() {
@@ -225,6 +269,7 @@ export default {
     this._volSet = false
     this._lock = 0
     this._itemIndex = -1
+    this._foto = 0
     const self = this
     load('lv', function (d) {
       self._levels = parseLevels(d)
@@ -292,6 +337,8 @@ export default {
 
   _handle(id) {
     if (id === 'back') return this._back()
+    if (id === 'foto') return this._openFoto()
+    if (id === 'fnext' || id === 'fprev') return this._showFoto(this._foto + (id === 'fnext' ? 1 : -1))
     if (id === 'kind:s' || id === 'kind:m' || id === 'kind:v') return this._openList(id.slice(5), 0)
     if (id === 'prev' || id === 'next') {
       const pages = pagesOf(this._kind)
@@ -358,6 +405,27 @@ export default {
     this._stop()
     this._buildCells()
     this.mode = 'edit'
+  },
+
+  // ------------------------------------------------------------ zdjęcia
+  // Zdjęcia są w /common/foto/<n>.jpg tylko w prywatnej paczce
+  // (scripts/add_photos.py). Dotknięcie zdjęcia = następne, po ostatnim pierwsze.
+  _openFoto() {
+    this._stop()
+    this.mode = 'foto'
+    if (FOTO_COUNT > 0) this._showFoto(0)
+  },
+
+  _showFoto(i) {
+    if (!(FOTO_COUNT > 0)) return
+    this._foto = (i % FOTO_COUNT + FOTO_COUNT) % FOTO_COUNT
+    this.fotoSrc = '/common/foto/' + (this._foto + 1) + '.jpg'
+    const txt = (this._foto + 1) + '/' + FOTO_COUNT
+    const next = []
+    for (let k = 0; k < txt.length; k++) {
+      next.push(IMG + 'k_' + (txt.charAt(k) === '/' ? 'sl' : txt.charAt(k)) + '.png')
+    }
+    this._update(this.fotoNum, next)
   },
 
   // ------------------------------------------------------------ poziom
@@ -574,20 +642,64 @@ export default {
   margin-bottom: 12px;
 }
 
-.tile {
+.tiles {
   width: 330px;
-  height: 100px;
-  border-radius: 26px;
+  height: 160px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tile {
+  width: 160px;
+  height: 160px;
+  border-radius: 28px;
   background-color: #1c1c1e;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
 }
 
 .tileimg {
-  width: 300px;
-  height: 84px;
+  width: 150px;
+  height: 130px;
+}
+
+.fbox {
+  width: 370px;
+  height: 320px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.foto {
+  width: 370px;
+  height: 320px;
+}
+
+.fcnt {
+  width: 120px;
+  height: 24px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.nofoto {
+  width: 340px;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 120px;
+}
+
+.nofoto1 {
+  width: 330px;
+  height: 34px;
+  margin-bottom: 8px;
+}
+
+.nofoto2 {
+  width: 330px;
+  height: 26px;
 }
 
 .scr {

@@ -18,6 +18,8 @@ const memes = ['bomba_plant', 'bomba_tik', 'wybuch', 'kliker', 'boom']
 const lv = [1, 1, 37, 1, 250]
 const states = [
   { mode: 'menu' },
+  { mode: 'foto', fotoCount: 3, fotoSrc: '/../sample.jpg', fotoNum: ['k_2', 'k_sl', 'k_3'].map((x) => IMG + x + '.png') },
+  { mode: 'foto', fotoCount: 0, fotoSrc: '', fotoNum: [] },
   { mode: 'list', headImg: IMG + 'h_m.png', pageImg: IMG + 'p_1_4.png',
     rows: memes.map((n, i) => ({ i, name: IMG + 'n_m_' + n + '.png', lv: k(lv[i]) })) },
   { mode: 'level', nameImg: IMG + 'n_m_bomba_tik.png', bigDigits: d(1), custom: false, err: false,
@@ -79,6 +81,8 @@ for (const s of states) { const box = document.createElement('div'); box.classNa
 </script></body></html>`
 fs.mkdirSync(path.join(root, '.preview'), { recursive: true })
 fs.writeFileSync(path.join(root, '.preview/index.html'), html)
+// zastępcze zdjęcie testowe (prawdziwe zdjęcia nigdy nie trafiają do podglądu)
+fs.copyFileSync(path.join(root, 'podglad-zdjecie.jpg'), path.join(root, '.preview/sample.jpg'))
 try { fs.symlinkSync(path.join(root, 'src'), path.join(root, '.preview/src')) } catch (e) {}
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 4 * 390 + 5 * 16, height: 2 * 450 + 3 * 16 }, deviceScaleFactor: 1 })

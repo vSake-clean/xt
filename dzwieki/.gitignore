@@ -3,3 +3,5 @@
 /build
 /sign
 /.preview
+/src/common/foto/
+*.prywatna.rpk

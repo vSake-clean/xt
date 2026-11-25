@@ -2,7 +2,7 @@
 
 Szybka aplikacja (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperOS (Xiaomi Vela). Odtwarza własne dźwięki, memowe efekty i wibracje. Każdy ma osobny poziom od **1 do 1000**.
 
-![Podgląd: menu, memy, poziom, edytory](podglad.png)
+![Podgląd: menu, zdjęcia, memy, poziom, edytory](podglad.png)
 
 **Gotowa paczka:** [`Dzwieki.rpk`](Dzwieki.rpk)
 
@@ -17,7 +17,7 @@ Szybka aplikacja (quick app, plik `.rpk`) dla zegarka **Redmi Watch 4** z HyperO
 **Wibracja:** Redmi Watch 4 udostępnia aplikacjom tylko krótki i długi impuls, a siły silnika nie da się zmienić. Poziom 1 to jeden najkrótszy impuls, czyli najsłabsza wibracja, jaką zegarek potrafi zrobić. Wyższe poziomy wydłużają każde uderzenie, aż do około 0,4 s brzęczenia. Odczuwalnych stopni jest więc około 10, nie 1000. Sąsiednie poziomy czuć tak samo.
 
 ## Co jest w środku
-Menu ma trzy kafelki: **Dźwięki**, **Memy** i **Wibracje**.
+Menu ma cztery kafelki: **Dźwięki**, **Memy**, **Wibracje** i **Zdjęcia**.
 
 | Dźwięki | Memy | Wibracje |
 |---|---|---|
@@ -31,6 +31,19 @@ Menu ma trzy kafelki: **Dźwięki**, **Memy** i **Wibracje**.
 Zwykłe dźwięki z kategorii Dźwięki to krótkie tony syntezowane skryptem `scripts/gen_sounds.py`.
 
 **Edytor własnych:** w ekranie poziomu „Własny dźwięk” lub „Własna wibracja” naciśnij ✎. Dotknięcie pola przełącza je na następną wartość i od razu je odtwarza. Kroki zapisują się same. `▶` gra całość, `■` zatrzymuje.
+
+## Zdjęcia
+Kafelek **Zdjęcia** pokazuje zdjęcia na ekranie zegarka. Strzałki `◀` `▶` albo dotknięcie zdjęcia przełączają na następne, na dole jest licznik, np. `2/4`.
+
+**Paczka z tego repozytorium nie ma żadnych zdjęć** i pokazuje „Brak zdjęć w tej paczce”. Zdjęcia dodaje się tylko do prywatnej paczki, której nie wrzuca się do repo:
+
+```
+python3 scripts/add_photos.py zdj1.jpg zdj2.jpg ...   # zmniejsza do 370×320, zapisuje jako JPG
+npm run build                                         # paczka ze zdjęciami w dist/
+python3 scripts/add_photos.py --clear                 # usuwa zdjęcia z projektu
+```
+
+Folder `src/common/foto/` jest w `.gitignore`. Zdjęcia zajmują po kilkadziesiąt KB.
 
 ## Uwaga: dźwięk nie jest jeszcze sprawdzony na zegarku
 Odtwarzanie dźwięku (`system.audio`) jest w oficjalnej dokumentacji Vela, ale Xiaomi nie podaje, czy działa na Redmi Watch 4. Na tym zegarku nikt tego jeszcze nie sprawdził. Wibracja (`vibrator.vibrate`) działa, bo została potwierdzona w innej aplikacji.
@@ -72,7 +85,8 @@ Przy każdej nowej wersji zwiększ `versionName` i `versionCode` w `src/manifest
 | `src/common/levels.js` | poziomy 1–1000, przeliczenie na głośność i impulsy wibracji |
 | `src/common/catalog.js` | lista dźwięków, memów i wzorów wibracji |
 | `src/common/durations.js` | długości dźwięków (generowane przez `gen_sounds.py`) |
+| `src/common/fotos.js` | liczba zdjęć w paczce (w repo zawsze 0) |
 | `src/common/img/`, `src/common/snd/` | grafiki (napisy jako PNG) i dźwięki dla zegarka |
 | `zrodla/` | przycięte prawdziwe nagrania CC0 i lista autorów `ZRODLA.md` |
-| `scripts/` | generatory grafik i dźwięków, pobieranie nagrań (`fetch_real.py`), podgląd ekranów |
+| `scripts/` | generatory grafik i dźwięków, pobieranie nagrań (`fetch_real.py`), dodawanie zdjęć (`add_photos.py`), podgląd ekranów |
 | `test/` | testy (`npm test`) |
