@@ -1,0 +1,294 @@
+<template>
+  <div class="game" @touchstart="onTouch" @click="onClick">
+    <image class="bg" src="/common/img/bg.png"></image>
+
+    <image class="col" src="/common/img/col_top.png"
+           style="left: {{ c0x }}px; top: {{ c0t }}px;"></image>
+    <image class="col" src="/common/img/col_bot.png"
+           style="left: {{ c0x }}px; top: {{ c0b }}px;"></image>
+    <image class="col" src="/common/img/col_top.png"
+           style="left: {{ c1x }}px; top: {{ c1t }}px;"></image>
+    <image class="col" src="/common/img/col_bot.png"
+           style="left: {{ c1x }}px; top: {{ c1b }}px;"></image>
+
+    <image class="bug" src="/common/img/bug.png" style="top: {{ by }}px;"></image>
+
+    <div class="score" show="{{ state !== 'ready' }}">
+      <image class="dg" for="{{ scoreRow }}" src="{{ $item }}"></image>
+    </div>
+
+    <image class="title" show="{{ state === 'ready' }}" src="/common/img/title.png"></image>
+    <image class="hint" show="{{ state === 'ready' }}" src="/common/img/hint.png"></image>
+
+    <image class="over" show="{{ state === 'over' }}" src="/common/img/over.png"></image>
+    <div class="bestbox" show="{{ state === 'over' }}">
+      <image class="bestlbl" src="/common/img/best.png"></image>
+      <image class="mg" for="{{ bestRow }}" src="{{ $item }}"></image>
+    </div>
+    <image class="hint" show="{{ state === 'over' }}" src="/common/img/again.png"></image>
+  </div>
+</template>
+
+<script>
+// Świetlik: oryginalna gra zręcznościowa na Redmi Watch 4 (Xiaomi Vela).
+// Dotknięcie ekranu podrywa świetlika w górę; trzeba przelatywać przez
+// szczeliny między kryształami. Fizyka liczona od czasu (game.js), więc
+// gra działa tak samo szybko niezależnie od płynności ekranu.
+import vibrator from '@system.vibrator'
+import storage from '@system.storage'
+import { createGame, H, GAP } from '../../common/game.js'
+
+const TICK_MS = 33
+
+function digitRow(prefix, n, slots) {
+  const s = String(n)
+  const out = []
+  for (let i = 0; i < slots; i++) {
+    const c = i < s.length ? s.charAt(i) : 'blank'
+    out.push('/common/img/' + prefix + '_' + c + '.png')
+  }
+  return out
+}
+
+function buzz(mode) {
+  try {
+    vibrator.vibrate({ mode: mode })
+  } catch (e) {}
+}
+
+export default {
+  private: {
+    state: 'ready',
+    by: 209,
+    c0x: 430, c0t: -300, c0b: 300,
+    c1x: 660, c1t: -300, c1b: 300,
+    scoreRow: [],
+    bestRow: []
+  },
+
+  onInit() {
+    this._game = createGame()
+    this._best = 0
+    this._timer = null
+    this._last = 0
+    this._touchAt = 0
+    this._overAt = 0
+    this.scoreRow = digitRow('d', 0, 3)
+    this.bestRow = digitRow('m', 0, 3)
+    this._render()
+    const self = this
+    try {
+      storage.get({
+        key: 'best',
+        success: function (v) {
+          const n = parseInt(v, 10)
+          if (n > 0) self._best = n
+        }
+      })
+    } catch (e) {}
+  },
+
+  onShow() {
+    this._start()
+  },
+
+  onHide() {
+    this._stop()
+  },
+
+  onDestroy() {
+    this._stop()
+  },
+
+  _start() {
+    if (this._timer) return
+    this._last = Date.now()
+    this._timer = setInterval(() => this._tick(), TICK_MS)
+  },
+
+  _stop() {
+    if (this._timer) {
+      clearInterval(this._timer)
+      this._timer = null
+    }
+  },
+
+  // touchstart i click mogą przyjść oba dla jednego dotknięcia.
+  onTouch() {
+    this._touchAt = Date.now()
+    this._tap()
+  },
+
+  onClick() {
+    if (Date.now() - this._touchAt < 400) return
+    this._tap()
+  },
+
+  _tap() {
+    const G = this._game
+    if (G.g.state === 'over') {
+      if (Date.now() - this._overAt < 700) return
+      G.reset()
+      this._setScore(0)
+      this.state = 'ready'
+      this._render()
+      this._start()
+      return
+    }
+    G.tap()
+    if (this.state !== G.g.state) this.state = G.g.state
+  },
+
+  _tick() {
+    const now = Date.now()
+    const dt = (now - this._last) / 1000
+    this._last = now
+    const G = this._game
+    const ev = G.step(dt)
+    if (ev === 'point') {
+      this._setScore(G.g.score)
+      buzz('short')
+    } else if (ev === 'crash') {
+      this._crash()
+    }
+    this._render()
+  },
+
+  _crash() {
+    const G = this._game
+    this._overAt = Date.now()
+    this._stop()
+    buzz('long')
+    if (G.g.score > this._best) {
+      this._best = G.g.score
+      try {
+        storage.set({ key: 'best', value: String(this._best) })
+      } catch (e) {}
+    }
+    this._update(this.bestRow, digitRow('m', this._best, 3))
+    this.state = 'over'
+  },
+
+  _setScore(n) {
+    this._update(this.scoreRow, digitRow('d', n, 3))
+  },
+
+  // Przypisanie tylko zmienionych wartości = mniej przerysowań.
+  _render() {
+    const g = this._game.g
+    const by = Math.round(g.y)
+    if (this.by !== by) this.by = by
+    const c0 = g.cols[0]
+    const c1 = g.cols[1]
+    const c0x = Math.round(c0.x)
+    const c1x = Math.round(c1.x)
+    if (this.c0x !== c0x) this.c0x = c0x
+    if (this.c1x !== c1x) this.c1x = c1x
+    if (this.c0t !== c0.gap - H) {
+      this.c0t = c0.gap - H
+      this.c0b = c0.gap + GAP
+    }
+    if (this.c1t !== c1.gap - H) {
+      this.c1t = c1.gap - H
+      this.c1b = c1.gap + GAP
+    }
+  },
+
+  _update(arr, next) {
+    let same = arr.length === next.length
+    for (let i = 0; same && i < next.length; i++) {
+      if (arr[i] !== next[i]) same = false
+    }
+    if (same) return
+    Array.prototype.splice.apply(arr, [0, arr.length].concat(next))
+  }
+}
+</script>
+
+<style>
+.game {
+  width: 390px;
+  height: 450px;
+  background-color: #060a20;
+}
+
+.bg {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 390px;
+  height: 450px;
+}
+
+.col {
+  position: absolute;
+  width: 64px;
+  height: 450px;
+}
+
+.bug {
+  position: absolute;
+  left: 80px;
+  width: 40px;
+  height: 32px;
+}
+
+.score {
+  position: absolute;
+  left: 150px;
+  top: 26px;
+  width: 90px;
+  height: 48px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.dg {
+  width: 30px;
+  height: 48px;
+}
+
+.title {
+  position: absolute;
+  left: 30px;
+  top: 110px;
+  width: 330px;
+  height: 60px;
+}
+
+.hint {
+  position: absolute;
+  left: 30px;
+  top: 300px;
+  width: 330px;
+  height: 36px;
+}
+
+.over {
+  position: absolute;
+  left: 30px;
+  top: 150px;
+  width: 330px;
+  height: 56px;
+}
+
+.bestbox {
+  position: absolute;
+  left: 110px;
+  top: 215px;
+  width: 170px;
+  height: 30px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.bestlbl {
+  width: 110px;
+  height: 30px;
+}
+
+.mg {
+  width: 18px;
+  height: 30px;
+}
+</style>
