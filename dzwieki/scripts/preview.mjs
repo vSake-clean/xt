@@ -18,7 +18,7 @@ const memes = ['bomba_plant', 'bomba_tik', 'wybuch', 'kliker', 'boom']
 const lv = [1, 1, 37, 1, 250]
 const states = [
   { mode: 'menu' },
-  { mode: 'list', headImg: IMG + 'h_m.png', pageImg: IMG + 'p_1_3.png',
+  { mode: 'list', headImg: IMG + 'h_m.png', pageImg: IMG + 'p_1_4.png',
     rows: memes.map((n, i) => ({ i, name: IMG + 'n_m_' + n + '.png', lv: k(lv[i]) })) },
   { mode: 'level', nameImg: IMG + 'n_m_bomba_tik.png', bigDigits: d(1), custom: false, err: false,
     ofImg: IMG + 't_of_s.png', accent: '#ffb340', playImg: IMG + 'b_stop.png' },

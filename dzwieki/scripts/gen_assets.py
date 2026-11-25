@@ -38,7 +38,8 @@ MEMES = [
     ("wybuch", "Wybuch"), ("kliker", "Kliker (pies)"), ("boom", "Boom"),
     ("smutna", "Smutna trąbka"), ("badumtss", "Ba dum tss"), ("trabka", "Trąbka MLG"),
     ("rura", "Metalowa rura"), ("swierszcze", "Świerszcze"), ("boing", "Boing"),
-    ("blad", "Błąd"), ("pierd", "Pierd"),
+    ("blad", "Błąd"), ("pierd", "Pierd"), ("bruh", "Bruh"),
+    ("zgrzyt", "Zgrzyt płyty"), ("smiech", "Śmiech publiczności"),
 ]
 VIBES = [
     ("tik", "Tik"), ("podwojny", "Podwójny"), ("serce", "Serce"), ("fala", "Fala"),

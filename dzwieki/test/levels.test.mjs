@@ -114,7 +114,7 @@ t('katalog: unikalne id, jeden własny w dźwiękach i wibracjach', () => {
   assert.equal(MEMES.filter((x) => x.custom).length, 0)
   assert.equal(itemsOf('m'), MEMES)
   assert.equal(pagesOf('s'), 2)
-  assert.equal(pagesOf('m'), 3)
+  assert.equal(pagesOf('m'), 4)
   assert.equal(pagesOf('v'), 2)
 })
 

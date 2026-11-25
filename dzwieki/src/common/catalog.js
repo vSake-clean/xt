@@ -1,5 +1,5 @@
-// Lista dźwięków, memów i wibracji. Dźwięki są oryginalne, syntezowane przez
-// scripts/gen_sounds.py (pliki src/common/snd/<id>_<wersja>.mp3 i <id>.wav).
+// Lista dźwięków, memów i wibracji. Pliki dźwięków robi scripts/gen_sounds.py
+// (src/common/snd/<id>_<wersja>.mp3 i <id>.wav).
 
 export const SOUNDS = [
   { id: 'ping' },
@@ -13,8 +13,8 @@ export const SOUNDS = [
   { id: 'wlasny', custom: true }
 ]
 
-// Memowe dźwięki: oryginalne, tylko w klimacie znanych memów
-// (bez nagrań z gier i filmów).
+// Memowe dźwięki: prawdziwe nagrania CC0 z Freesound (autorzy w
+// zrodla/ZRODLA.md). Tylko piknięcia bomby są syntezowane.
 export const MEMES = [
   { id: 'bomba_plant' },
   { id: 'bomba_tik' },
@@ -28,7 +28,10 @@ export const MEMES = [
   { id: 'swierszcze' },
   { id: 'boing' },
   { id: 'blad' },
-  { id: 'pierd' }
+  { id: 'pierd' },
+  { id: 'bruh' },
+  { id: 'zgrzyt' },
+  { id: 'smiech' }
 ]
 
 // Wzory wibracji: 'b' krótkie uderzenie, 'B' długie, liczba = pauza w ms.

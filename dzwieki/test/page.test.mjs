@@ -239,12 +239,12 @@ t('brak modułu audio: napis o błędzie od razu', () => {
   delete store.fmt
 })
 
-t('memy: bomba gra cicho, ma własny poziom i 3 strony', () => {
+t('memy: bomba gra cicho, ma własny poziom i 4 strony', () => {
   const vm = mount()
   tap(vm, 'kind:m')
   assert.equal(vm.mode, 'list')
   assert.equal(vm.headImg, '/common/img/h_m.png')
-  assert.equal(vm.pageImg, '/common/img/p_1_3.png')
+  assert.equal(vm.pageImg, '/common/img/p_1_4.png')
   assert.equal(vm.rows[0].name, '/common/img/n_m_bomba_plant.png')
   tap(vm, 'row:1')
   assert.equal(vm.custom, false)
@@ -255,15 +255,17 @@ t('memy: bomba gra cicho, ma własny poziom i 3 strony', () => {
   tap(vm, 'play')
   assert.equal(played[before].src, '/common/snd/bomba_tik_2.mp3')
   assert.equal(vm.playImg, '/common/img/b_stop.png') // odliczanie trwa ponad 6 s
-  advance(8000)
+  advance(9000)
   assert.equal(vm.playImg, '/common/img/b_play.png')
   tap(vm, 'back')
   tap(vm, 'next')
   tap(vm, 'next')
-  assert.equal(vm.pageImg, '/common/img/p_3_3.png')
-  assert.equal(vm.rows.length, 3)
   tap(vm, 'next')
-  assert.equal(vm.pageImg, '/common/img/p_3_3.png')
+  assert.equal(vm.pageImg, '/common/img/p_4_4.png')
+  assert.equal(vm.rows.length, 1)
+  assert.equal(vm.rows[0].name, '/common/img/n_m_smiech.png')
+  tap(vm, 'next')
+  assert.equal(vm.pageImg, '/common/img/p_4_4.png')
 })
 
 t('przycisk wstecz zegarka', () => {

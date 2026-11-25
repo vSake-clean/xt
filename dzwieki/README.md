@@ -21,15 +21,14 @@ Menu ma trzy kafelki: **Dźwięki**, **Memy** i **Wibracje**.
 
 | Dźwięki | Memy | Wibracje |
 |---|---|---|
-| Ping, Kropla, Dzwonek, Ptaszek, Gong, Klik, Alarm, Fanfara | Bomba: podłożenie, Bomba: odliczanie, Wybuch, Kliker (pies), Boom, Smutna trąbka, Ba dum tss, Trąbka MLG, Metalowa rura, Świerszcze, Boing, Błąd, Pierd | Tik, Podwójny, Serce, Fala, SOS, Alarm, Zegar |
+| Ping, Kropla, Dzwonek, Ptaszek, Gong, Klik, Alarm, Fanfara | Bomba: podłożenie, Bomba: odliczanie, Wybuch, Kliker (pies), Boom, Smutna trąbka, Ba dum tss, Trąbka MLG, Metalowa rura, Świerszcze, Boing, Błąd, Pierd, Bruh, Zgrzyt płyty, Śmiech publiczności | Tik, Podwójny, Serce, Fala, SOS, Alarm, Zegar |
 | **Własny dźwięk**: melodia z 8 pól (nuty C D E F G A H C′ albo pauza) | | **Własna wibracja**: 8 pól (pauza, krótki tik albo długie BZZ) |
 
-Memy:
-- **Bomba: podłożenie**: wpisywanie kodu (7 piknięć) i uzbrojenie.
-- **Bomba: odliczanie**: pikanie coraz szybciej, długi pisk i wybuch (ok. 6 s).
-- **Kliker (pies)**: „klik-klak” jak kliker do szkolenia psa.
+**Memy to prawdziwe nagrania** z [Freesound](https://freesound.org) na licencji **CC0** (domena publiczna): prawdziwy kliker do szkolenia psa, prawdziwa puzonowa „smutna trąbka”, prawdziwa syrena, metalowa rura spadająca na beton, nocne świerszcze, śmiech publiczności itd. Autorzy i linki do każdego nagrania są w [`zrodla/ZRODLA.md`](zrodla/ZRODLA.md). Nagrania zostały tylko przycięte. Świerszcze dodatkowo przefiltrowano z szumu, a syrenę pocięto na rytm 3 krótkie i 1 długi.
 
-**Wszystkie dźwięki są oryginalne**, syntezowane od zera skryptem `scripts/gen_sounds.py`. Memy tylko naśladują znany klimat, np. bomby z gier FPS. W paczce nie ma nagrań z CS:GO ani innych gier i filmów, bo są chronione prawem autorskim.
+**Bomba:** oryginalnych dźwięków z CS:GO/CS2 tu nie ma. To nagrania Valve chronione prawem autorskim i nie wolno ich rozpowszechniać. Piknięcia bomby (wpisywanie kodu, przyspieszające odliczanie) są syntezowane w tym samym rytmie, a na końcu odliczania gra prawdziwe nagranie wybuchu.
+
+Zwykłe dźwięki z kategorii Dźwięki to krótkie tony syntezowane skryptem `scripts/gen_sounds.py`.
 
 **Edytor własnych:** w ekranie poziomu „Własny dźwięk” lub „Własna wibracja” naciśnij ✎. Dotknięcie pola przełącza je na następną wartość i od razu je odtwarza. Kroki zapisują się same. `▶` gra całość, `■` zatrzymuje.
 
@@ -49,13 +48,14 @@ Potrzebny jest **telefon z Androidem**.
 **Aktualizacja:** najpierw usuń starą wersję z zegarka, potem wgraj nową. Notify nie nadpisuje zainstalowanej aplikacji.
 
 ## Budowanie
-Wymagany Node.js 18+. Do generowania grafik i dźwięków potrzebny jest Python 3 z Pillow i numpy oraz ffmpeg.
+Wymagany Node.js 18+. Do generowania grafik i dźwięków potrzebny jest Python 3 z Pillow i numpy oraz ffmpeg (i curl do pobrania nagrań).
 
 ```
 npm install
 npm test                         # testy poziomów i logiki ekranu
 python3 scripts/gen_assets.py    # grafiki (tylko gdy zmieniasz wygląd)
-python3 scripts/gen_sounds.py    # dźwięki (tylko gdy je zmieniasz)
+python3 scripts/fetch_real.py    # pobiera i przycina nagrania CC0 do zrodla/ (są już w repo)
+python3 scripts/gen_sounds.py    # pliki dźwięków dla zegarka (tylko gdy je zmieniasz)
 npm run build                    # paczka trafia do dist/
 cp dist/*.rpk Dzwieki.rpk
 node scripts/preview.mjs podglad.png   # podgląd ekranów w Chromium (Playwright)
@@ -72,6 +72,7 @@ Przy każdej nowej wersji zwiększ `versionName` i `versionCode` w `src/manifest
 | `src/common/levels.js` | poziomy 1–1000, przeliczenie na głośność i impulsy wibracji |
 | `src/common/catalog.js` | lista dźwięków, memów i wzorów wibracji |
 | `src/common/durations.js` | długości dźwięków (generowane przez `gen_sounds.py`) |
-| `src/common/img/`, `src/common/snd/` | grafiki (napisy jako PNG) i dźwięki |
-| `scripts/` | generatory grafik i dźwięków, podgląd ekranów |
+| `src/common/img/`, `src/common/snd/` | grafiki (napisy jako PNG) i dźwięki dla zegarka |
+| `zrodla/` | przycięte prawdziwe nagrania CC0 i lista autorów `ZRODLA.md` |
+| `scripts/` | generatory grafik i dźwięków, pobieranie nagrań (`fetch_real.py`), podgląd ekranów |
 | `test/` | testy (`npm test`) |

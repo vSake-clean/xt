@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generator dźwięków dla aplikacji Dźwięki (Redmi Watch 4).
 
-Wszystkie dźwięki są oryginalne, syntezowane tutaj z fal i szumu (bez
-żadnych nagrań z gier, filmów czy internetu). Memowe dźwięki tylko
-naśladują znany klimat, np. pikanie bomby czy kliker dla psa.
+Zwykłe dźwięki (ping, dzwonek...) i piknięcia bomby są syntezowane tutaj.
+Memy to prawdziwe nagrania na licencji CC0 z Freesound, pobrane i przycięte
+przez scripts/fetch_real.py do folderu zrodla/ (autorzy: zrodla/ZRODLA.md).
 
 Każdy dźwięk powstaje jako:
   <id>_0.mp3  pełna głośność (szczyt -1 dBFS)
@@ -25,6 +25,7 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SND = os.path.join(ROOT, "src", "common", "snd")
 DUR_JS = os.path.join(ROOT, "src", "common", "durations.js")
+ZRODLA = os.path.join(ROOT, "zrodla")
 SR = 22050
 WAV_SR = 11025
 TIERS = [1.0, 0.1, 0.01]
@@ -98,29 +99,8 @@ def place(total_sec, events):
     return out
 
 
-def reverb(y, sec=0.6, mix=0.3):
-    ir = noise(sec) * np.exp(-t_axis(sec) / (sec / 5))
-    ir = band(ir, 200, 6000)
-    ir /= np.sqrt(np.sum(ir ** 2))
-    n = len(y) + len(ir)
-    wet = np.fft.irfft(np.fft.rfft(y, n) * np.fft.rfft(ir, n), n)
-    dry = np.concatenate([y, np.zeros(len(ir))])
-    return dry + mix * wet / (np.max(np.abs(wet)) + 1e-9) * np.max(np.abs(y))
 
 
-def saw(f, sec, k_max=14, cutoff=None):
-    """Piła z sumy harmonicznych; cutoff(t) przyciemnia barwę w czasie."""
-    t = t_axis(sec)
-    ff = f(t) if callable(f) else np.full_like(t, f)
-    ph = 2 * np.pi * np.cumsum(ff) / SR
-    y = np.zeros_like(t)
-    for k in range(1, k_max + 1):
-        g = 1.0 / k
-        if cutoff is not None:
-            fc = cutoff(t) if callable(cutoff) else cutoff
-            g = g / (1 + (k * ff / fc) ** 4)
-        y += g * np.sin(k * ph)
-    return y
 
 
 # ---------------------------------------------------------------- zwykłe dźwięki
@@ -187,23 +167,26 @@ def note(f):
 
 
 # ---------------------------------------------------------------- memy
+# Memy to prawdziwe nagrania CC0 z Freesound (zrodla/*.flac, pobiera je
+# scripts/fetch_real.py). Syntezowane są tylko piknięcia bomby.
+REAL = ["wybuch", "kliker", "boom", "smutna", "badumtss", "trabka", "rura",
+        "swierszcze", "boing", "blad", "pierd", "bruh", "zgrzyt", "smiech"]
+
+
+def real(name):
+    path = os.path.join(ZRODLA, name + ".flac")
+    if not os.path.exists(path):
+        raise SystemExit("brak %s, uruchom najpierw: python3 scripts/fetch_real.py" % path)
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", path, "-f", "s16le", "-ac", "1",
+                          "-ar", str(SR), "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype="<i2").astype(np.float64) / 32768
+
+
 def bomb_beep(sec=0.075, f=1960):
     """Ostre, krótkie piknięcie zapalnika: prostokąt z kilku harmonicznych."""
     t = t_axis(sec)
     y = sum(np.sin(2 * np.pi * f * k * t) / k for k in (1, 3, 5))
     return band(y * env(sec, 0.002, 1.0), 300, 7000)
-
-
-def wybuch(sec=1.7):
-    t = t_axis(sec)
-    n = noise(sec)
-    # szum przyciemniany w czasie: najpierw huk, potem dudnienie
-    bright = band(n, 0, 2500) * np.exp(-t / 0.08)
-    dark = band(n, 0, 500) * np.exp(-t / 0.45)
-    thump = sweep(70 * np.exp(-t / 0.25) + 38, sec) * np.exp(-t / 0.35)
-    y = 0.6 * bright + 1.2 * dark + 1.4 * thump
-    y = np.tanh(2.2 * y / np.max(np.abs(y)))
-    return y * env(sec, 0.003, 10.0)
 
 
 def bomba_plant():
@@ -222,147 +205,22 @@ def bomba_plant():
 
 
 def bomba_tik():
-    # odliczanie coraz szybciej, długi pisk i wybuch
+    # odliczanie coraz szybciej, długi pisk i prawdziwe nagranie wybuchu
     ev = []
     t, gap = 0.0, 0.9
     while gap > 0.1:
-        ev.append((t, bomb_beep()))
+        ev.append((t, 0.6 * bomb_beep()))
         t += gap
         gap *= 0.8
     for _ in range(4):
-        ev.append((t, bomb_beep(0.05)))
+        ev.append((t, 0.6 * bomb_beep(0.05)))
         t += 0.085
-    ev.append((t, bomb_beep(0.45)))
+    ev.append((t, 0.6 * bomb_beep(0.45)))
     t += 0.5
-    boom = wybuch(1.5)
-    ev.append((t, 1.6 * boom))
+    boom = real("wybuch")[: int(2.2 * SR)].copy()
+    boom[-int(0.6 * SR):] *= np.linspace(1, 0, int(0.6 * SR)) ** 2
+    ev.append((t, boom / np.max(np.abs(boom))))
     return place(t + len(boom) / SR, ev)
-
-
-def kliker():
-    # metalowy języczek: "klik" przy wciśnięciu i cichsze "klak" przy puszczeniu
-    def snap(f1, f2, amp):
-        sec = 0.05
-        t = t_axis(sec)
-        y = 0.5 * noise(sec) * np.exp(-t / 0.0008)
-        y += np.sin(2 * np.pi * f1 * t) * np.exp(-t / 0.006)
-        y += 0.6 * np.sin(2 * np.pi * f2 * t) * np.exp(-t / 0.004)
-        return amp * band(y, 900, 9000)
-    return place(0.26, [(0.0, snap(3300, 5200, 1.0)), (0.12, snap(2800, 4700, 0.55))])
-
-
-def boom():
-    sec = 1.1
-    t = t_axis(sec)
-    y = sweep(115 * np.exp(-t / 0.06) + 48, sec) * np.exp(-t / 0.42)
-    y += 0.25 * band(noise(sec), 0, 900) * np.exp(-t / 0.05)
-    # przester dodaje harmoniczne, żeby mały głośnik zegarka coś zagrał
-    y = np.tanh(4.0 * y / np.max(np.abs(y)))
-    y *= env(sec, 0.002, 10.0)
-    y[-int(0.25 * SR):] *= np.linspace(1, 0, int(0.25 * SR)) ** 2  # bez trzasku na końcu
-    return reverb(y, 0.8, 0.35)
-
-
-def smutna_trabka():
-    seq = ((392.0, 0.36), (369.99, 0.36), (349.23, 0.36), (329.63, 1.25))
-    out = []
-    for i, (f, sec) in enumerate(seq):
-        last = i == len(seq) - 1
-        fn = (lambda tt, f=f: f * (1 + 0.014 * np.sin(2 * np.pi * 5.5 * tt) * np.clip(tt / 0.25, 0, 1))) if last else f
-        # "wah": barwa otwiera się i zamyka w każdej nucie
-        cut = (lambda tt, s=sec: 700 + 1500 * np.sin(np.pi * np.clip(tt / s, 0, 1)) ** 0.8)
-        y = saw(fn, sec, 12, cut)
-        y *= np.clip(t_axis(sec) / 0.03, 0, 1) * np.linspace(1, 0.75 if not last else 0.6, len(y))
-        fade = int(0.03 * SR)
-        y[-fade:] *= np.linspace(1, 0, fade)
-        out.extend([y, silence(0.03)])
-    return cat(*out)
-
-
-def ba_dum_tss():
-    def tom(f0, f1, sec=0.22):
-        t = t_axis(sec)
-        y = sweep(f1 + (f0 - f1) * np.exp(-t / 0.04), sec) * np.exp(-t / 0.09)
-        return y + 0.2 * band(noise(sec), 0, 3000) * np.exp(-t / 0.015)
-
-    def cymbal(sec=0.9):
-        t = t_axis(sec)
-        y = band(noise(sec), 4500, None) * np.exp(-t / 0.28)
-        for f in (5230, 6870, 8110):
-            y += 0.15 * np.sin(2 * np.pi * f * t) * np.exp(-t / 0.2)
-        return 0.8 * y
-    return place(1.35, [(0.0, tom(210, 140)), (0.2, tom(170, 105)), (0.44, cymbal())])
-
-
-def trabka_mlg():
-    def blast(sec):
-        t = t_axis(sec)
-        f = lambda tt: 466 * (1 - 0.04 * np.exp(-tt / 0.03))
-        y = saw(f, sec, 14) + 0.8 * saw(lambda tt: f(tt) * 1.26, sec, 12) + 0.6 * saw(lambda tt: f(tt) * 1.5, sec, 10)
-        y = np.tanh(1.8 * y / np.max(np.abs(y)))
-        a = np.clip(t / 0.012, 0, 1)
-        fade = int(0.025 * SR)
-        a[-fade:] *= np.linspace(1, 0, fade)
-        return y * a
-    ev, t = [], 0.0
-    for sec in (0.11, 0.11, 0.11, 0.62):
-        ev.append((t, blast(sec)))
-        t += sec + 0.05
-    return place(t, ev)
-
-
-def metalowa_rura():
-    def clang(sec, amp):
-        t = t_axis(sec)
-        y = 0.4 * band(noise(sec), 1500, None) * np.exp(-t / 0.01)
-        for f, d, a in ((523, 1.1, 1.0), (1371, 0.8, 0.8), (2412, 0.5, 0.6), (3787, 0.35, 0.4), (5321, 0.22, 0.3)):
-            y += a * np.sin(2 * np.pi * f * t) * np.exp(-t / d)
-        return amp * y * env(sec, 0.001, 10.0)
-    return place(2.2, [(0.0, clang(2.1, 1.0)), (0.34, clang(1.6, 0.45)),
-                       (0.56, clang(1.2, 0.25)), (0.70, clang(0.9, 0.12))])
-
-
-def swierszcze():
-    def chirp(f, amp):
-        out = []
-        for _ in range(3):
-            t = t_axis(0.014)
-            out.extend([np.sin(2 * np.pi * f * t) * np.sin(np.pi * t / 0.014), silence(0.016)])
-        return amp * cat(*out)
-    ev = []
-    for i in range(5):
-        ev.append((0.05 + i * 0.42, chirp(4650, 1.0)))
-        ev.append((0.27 + i * 0.42, chirp(4250, 0.45)))
-    return place(2.25, ev)
-
-
-def boing():
-    sec = 0.95
-    t = t_axis(sec)
-    f = 380 + 240 * t + 280 * np.exp(-t / 0.35) * np.sin(2 * np.pi * 11 * t)
-    y = sweep(f, sec) + 0.35 * sweep(2 * f, sec)
-    return y * env(sec, 0.003, 0.4)
-
-
-def blad():
-    def buzz(f, sec):
-        t = t_axis(sec)
-        y = sum(np.sin(2 * np.pi * f * k * t) / k for k in (1, 3, 5, 7, 9))
-        return band(y, 0, 3500) * env(sec, 0.004, 10.0)
-    return cat(buzz(190, 0.16), silence(0.05), buzz(140, 0.32))
-
-
-def pierd():
-    sec = 0.85
-    t = t_axis(sec)
-    # drgający, nieregularny bas: impulsy o pływającej częstotliwości
-    walk = np.cumsum(RNG.standard_normal(len(t))) / SR * 40
-    f = 140 + 30 * np.sin(2 * np.pi * 2.3 * t) + walk - np.linspace(0, 35, len(t))
-    ph = np.cumsum(f) / SR
-    pulses = np.maximum(0, np.sin(2 * np.pi * ph)) ** 6
-    y = band(pulses + 0.08 * noise(sec), 90, 2000)
-    flutter = 1 + 0.35 * np.sin(2 * np.pi * 9 * t + 2 * np.sin(2 * np.pi * 1.7 * t))
-    return y * flutter * env(sec, 0.02, 0.9)
 
 
 # ---------------------------------------------------------------- zapis
@@ -399,11 +257,10 @@ def write_all(name, y):
 SOUNDS = {
     "ping": ping, "kropla": kropla, "dzwonek": dzwonek, "ptaszek": ptaszek,
     "gong": gong, "klik": klik, "alarm": alarm, "fanfara": fanfara,
-    "bomba_plant": bomba_plant, "bomba_tik": bomba_tik, "wybuch": wybuch,
-    "kliker": kliker, "boom": boom, "smutna": smutna_trabka, "badumtss": ba_dum_tss,
-    "trabka": trabka_mlg, "rura": metalowa_rura, "swierszcze": swierszcze,
-    "boing": boing, "blad": blad, "pierd": pierd,
+    "bomba_plant": bomba_plant, "bomba_tik": bomba_tik,
 }
+for _name in REAL:
+    SOUNDS[_name] = (lambda n=_name: real(n))
 
 
 def main():
