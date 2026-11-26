@@ -50,13 +50,14 @@ def kadr(w, h):
             f"crop={w}:{h},setsar=1,fps={FPS},format=yuv420p")
 
 
-def segment_zdjecie(src, dst, w, h, czas, idx, tlo):
+def segment_zdjecie(src, dst, w, h, czas, idx, tlo, zoom=0.15):
     klatki = int(round(czas * FPS)) + 1
+    krok = zoom / klatki  # zoom zawsze o tyle samo, niezależnie od długości ujęcia
     # skaluj z zapasem, potem zoompan (naprzemiennie zoom in / zoom out)
     if idx % 2 == 0:
-        z = "min(zoom+0.0010,1.15)"
+        z = f"min(zoom+{krok:.5f},{1+zoom})"
     else:
-        z = "if(eq(on,0),1.15,max(zoom-0.0010,1.0))"
+        z = f"if(eq(on,0),{1+zoom},max(zoom-{krok:.5f},1.0))"
     if tlo == "rozmyte":
         # całe zdjęcie na środku, w tle jego rozmyta i przyciemniona kopia
         baza = (f"split[a][b];[a]scale={w*2}:{h*2}:force_original_aspect_ratio=increase,"
@@ -92,7 +93,7 @@ def segment_klip(src, dst, w, h, maks):
     run(cmd)
 
 
-def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj):
+def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj, muzyka_od=0.0):
     dl = [duration(s) for s in segmenty]
     n = len(segmenty)
     T = min([przejscie] + [d / 2 for d in dl]) if n > 1 else 0
@@ -113,16 +114,17 @@ def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj):
             v, a = f"[v{i}]", f"[a{i}]"
         f.append(f"{v}null[v];{a}anull[a]")
         total = sum(dl) - T * (n - 1)
-    fo = max(total - 1.0, 0)
-    f.append(f"[v]fade=t=in:d=0.5,fade=t=out:st={fo:.3f}:d=1[vo]")
+    dz = min(1.0, total * 0.06)  # wyciemnienie na końcu, krótsze przy krótkich filmach
+    fo = max(total - dz, 0)
+    f.append(f"[v]fade=t=in:d={min(0.5, dz / 2):.3f},fade=t=out:st={fo:.3f}:d={dz:.3f}[vo]")
     if muzyka:
-        cmd += ["-stream_loop", "-1", "-i", str(muzyka)]
+        cmd += ["-stream_loop", "-1", "-ss", f"{muzyka_od:.3f}", "-i", str(muzyka)]
         f.append(f"[a]volume={glosnosc_klipow}[ak];"
                  f"[{n}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:{total:.3f}[m];"
                  f"[ak][m]amix=inputs=2:duration=first:normalize=0[mx];"
-                 f"[mx]afade=t=out:st={fo:.3f}:d=1[ao]")
+                 f"[mx]afade=t=out:st={fo:.3f}:d={dz:.3f}[ao]")
     else:
-        f.append(f"[a]afade=t=out:st={fo:.3f}:d=1[ao]")
+        f.append(f"[a]afade=t=out:st={fo:.3f}:d={dz:.3f}[ao]")
     cmd += ["-filter_complex", ";".join(f), "-map", "[vo]", "-map", "[ao]",
             "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(dst)]
@@ -143,7 +145,13 @@ def main():
     p.add_argument("--przejscia", default="fade", help="rodzaj przejścia ffmpeg xfade albo 'mix' (różne po kolei)")
     p.add_argument("--bpm", type=float, default=0,
                    help="tempo muzyki: zdjęcia zmieniają się co --takty uderzeń (nadpisuje --zdjecie)")
-    p.add_argument("--takty", type=int, default=4, help="co ile uderzeń zmiana zdjęcia (z --bpm)")
+    p.add_argument("--takty", type=float, default=4, help="co ile uderzeń zmiana zdjęcia (z --bpm)")
+    p.add_argument("--final", type=float, default=0,
+                   help="ostatnie zdjęcie trwa tyle uderzeń (z --bpm) albo sekund (bez --bpm); 0 = jak inne")
+    p.add_argument("--beat", type=float, default=None,
+                   help="moment (s) jakiegoś uderzenia w utworze: muzyka startuje tak, by cięcia trafiały w rytm")
+    p.add_argument("--muzyka-od", type=float, default=0, help="od której sekundy utworu zacząć (bez --beat)")
+    p.add_argument("--zoom", type=float, default=0.15, help="siła zoomu na zdjęciach (0 = bez)")
     p.add_argument("--glosnosc-klipow", type=float, default=0.3, help="głośność dźwięku z klipów, gdy jest muzyka")
     a = p.parse_args()
 
@@ -158,8 +166,17 @@ def main():
     w, h = FORMATY[a.format]
     if a.bpm:
         # cięcie co N uderzeń: długość ujęcia = N * beat + przejście
-        a.zdjecie = round(a.takty * 60 / a.bpm + a.przejscie, 3)
-        print(f"Tempo {a.bpm} BPM -> zdjęcie {a.zdjecie} s")
+        beat = 60 / a.bpm
+        a.zdjecie = round(a.takty * beat + a.przejscie, 3)
+        if a.final:
+            a.final = round(a.final * beat + a.przejscie, 3)
+        if a.beat is not None:
+            # środek przejścia ma wypaść na uderzeniu
+            od = a.beat - a.przejscie / 2
+            while od < 0:
+                od += beat
+            a.muzyka_od = od
+        print(f"Tempo {a.bpm} BPM -> zdjęcie {a.zdjecie} s, muzyka od {a.muzyka_od:.3f} s")
     a.wyjscie.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         segmenty = []
@@ -167,12 +184,13 @@ def main():
             dst = Path(tmp) / f"{i:03d}.mp4"
             print(f"[{i+1}/{len(media)}] {src.name}")
             if src.suffix.lower() in IMG:
-                segment_zdjecie(src, dst, w, h, a.zdjecie, i, a.tlo)
+                czas = a.final if (a.final and i == len(media) - 1) else a.zdjecie
+                segment_zdjecie(src, dst, w, h, czas, i, a.tlo, a.zoom)
             else:
                 segment_klip(src, dst, w, h, a.klip_maks)
             segmenty.append(dst)
         print("Sklejanie" + (f" z muzyką {muzyka.name}" if muzyka else "") + "...")
-        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow, a.przejscia)
+        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow, a.przejscia, a.muzyka_od)
     print(f"Gotowe: {a.wyjscie} ({total:.1f} s, {w}x{h})")
 
 

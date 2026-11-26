@@ -31,6 +31,10 @@ python3 montaz.py --wyjscie gotowe/wakacje.mp4
 | `--tlo` | `przyciete` | `przyciete` = zdjęcie wypełnia kadr, `rozmyte` = całe zdjęcie na rozmytym tle (dobre do kwadratowych/małych zdjęć) |
 | `--przejscia` | `fade` | rodzaj przejścia (`fade`, `slideleft`, `circleopen`, `zoomin`…) albo `mix` = różne po kolei |
 | `--bpm` / `--takty` | `0` / `4` | cięcie do rytmu: zmiana zdjęcia co N uderzeń muzyki |
+| `--beat` | — | moment (s) dowolnego uderzenia w utworze: muzyka startuje tak, żeby cięcia trafiały w rytm |
+| `--muzyka-od` | `0` | od której sekundy utworu zacząć (gdy nie podano `--beat`) |
+| `--final` | `0` | ostatnie zdjęcie trwa tyle uderzeń (z `--bpm`) albo sekund; `0` = jak inne |
+| `--zoom` | `0.15` | siła zoomu na zdjęciach (`0` = bez zoomu) |
 | `--glosnosc-klipow` | `0.3` | głośność dźwięku z klipów, gdy jest muzyka |
 | `--wejscie` / `--wyjscie` | `materialy/` / `gotowe/edit.mp4` | foldery |
 
@@ -42,16 +46,27 @@ Jeśli zdjęcia są screenami (np. podgląd w czacie), `wytnij.py` wycina z każ
 python3 wytnij.py --ramka 308,1576,463,463 screeny/*.jpg --do materialy/
 ```
 
-## Przykład: edit do rytmu
+## Przykłady: edit do rytmu
+
+Spokojny (zmiana co 4 uderzenia, długie przejścia):
 
 ```bash
 python3 montaz.py --tlo rozmyte --przejscia mix --bpm 143.55 --takty 4 --przejscie 0.4
 ```
 
+Szybki i energiczny (20 zdjęć w ok. 10 s, cięcie na każde uderzenie, ostatnie zdjęcie trzymane 2 uderzenia):
+
+```bash
+python3 montaz.py --tlo rozmyte --przejscia mix --bpm 120.14 --takty 1 --final 2 \
+  --beat 0.035 --przejscie 0.12 --zoom 0.12
+```
+
+Przy „Electrodoodle” tempo wynosi 120,14 BPM, a pierwsze uderzenie wypada w 0,035 s.
+
 ## Muzyka
 
 Używamy tylko muzyki na wolnej licencji, np. Kevin MacLeod (incompetech.com, CC BY 4.0).
-Przy publikacji podpisz utwór, np.: *"Monkeys Spinning Monkeys" Kevin MacLeod (incompetech.com), licencja CC BY 4.0*.
+Przy publikacji podpisz utwór, np.: *"Electrodoodle" Kevin MacLeod (incompetech.com), licencja CC BY 4.0*.
 Popularny utwór z TikToka/Instagrama najlepiej dodać już w aplikacji przy publikacji.
 
 ## Prywatność
