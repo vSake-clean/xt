@@ -16,3 +16,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
+| [`edit/`](edit/) | Edit: montaż filmu ze zdjęć i klipów (przejścia, zoom, muzyka) | Python + ffmpeg | [`edit/montaz.py`](edit/montaz.py) → `edit/gotowe/` |
