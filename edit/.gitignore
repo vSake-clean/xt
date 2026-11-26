@@ -1,0 +1,5 @@
+# prywatne materiały i gotowe filmy nie trafiają do repozytorium
+materialy/*
+!materialy/.gitkeep
+gotowe/*
+!gotowe/.gitkeep

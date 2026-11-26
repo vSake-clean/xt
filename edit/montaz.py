@@ -20,6 +20,8 @@ VID = {".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi", ".3gp"}
 AUD = {".mp3", ".m4a", ".wav", ".aac", ".ogg", ".flac"}
 FORMATY = {"pion": (1080, 1920), "poziom": (1920, 1080), "kwadrat": (1080, 1080)}
 FPS = 30
+PRZEJSCIA = ["fade", "slideleft", "circleopen", "smoothup", "zoomin", "wiperight",
+             "dissolve", "slideup", "radial", "smoothleft", "pixelize", "circleclose"]
 
 
 def run(cmd):
@@ -48,19 +50,27 @@ def kadr(w, h):
             f"crop={w}:{h},setsar=1,fps={FPS},format=yuv420p")
 
 
-def segment_zdjecie(src, dst, w, h, czas, idx):
-    klatki = int(czas * FPS)
+def segment_zdjecie(src, dst, w, h, czas, idx, tlo):
+    klatki = int(round(czas * FPS)) + 1
     # skaluj z zapasem, potem zoompan (naprzemiennie zoom in / zoom out)
     if idx % 2 == 0:
         z = "min(zoom+0.0010,1.15)"
     else:
         z = "if(eq(on,0),1.15,max(zoom-0.0010,1.0))"
-    vf = (f"scale={w*2}:{h*2}:force_original_aspect_ratio=increase,crop={w*2}:{h*2},"
+    if tlo == "rozmyte":
+        # całe zdjęcie na środku, w tle jego rozmyta i przyciemniona kopia
+        baza = (f"split[a][b];[a]scale={w*2}:{h*2}:force_original_aspect_ratio=increase,"
+                f"crop={w*2}:{h*2},boxblur=40:4,eq=brightness=-0.12[bg];"
+                f"[b]scale={w*2}:{h*2}:force_original_aspect_ratio=decrease[fg];"
+                f"[bg][fg]overlay=(W-w)/2:(H-h)/2,")
+    else:
+        baza = f"scale={w*2}:{h*2}:force_original_aspect_ratio=increase,crop={w*2}:{h*2},"
+    vf = (baza +
           f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={klatki}:s={w}x{h}:fps={FPS},"
           f"setsar=1,format=yuv420p")
     run(["ffmpeg", "-y", "-loop", "1", "-i", str(src),
          "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
-         "-vf", vf, "-t", f"{czas}", "-map", "0:v", "-map", "1:a",
+         "-filter_complex", f"[0:v]{vf}[v]", "-t", f"{czas}", "-map", "[v]", "-map", "1:a",
          "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
          "-c:a", "aac", "-b:a", "192k", "-shortest", str(dst)])
 
@@ -82,7 +92,7 @@ def segment_klip(src, dst, w, h, maks):
     run(cmd)
 
 
-def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow):
+def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj):
     dl = [duration(s) for s in segmenty]
     n = len(segmenty)
     T = min([przejscie] + [d / 2 for d in dl]) if n > 1 else 0
@@ -97,7 +107,8 @@ def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow):
         v, a, off = "[0:v]", "[0:a]", 0.0
         for i in range(1, n):
             off += dl[i - 1] - T
-            f.append(f"{v}[{i}:v]xfade=transition=fade:duration={T}:offset={off:.3f}[v{i}]")
+            tr = PRZEJSCIA[(i - 1) % len(PRZEJSCIA)] if rodzaj == "mix" else rodzaj
+            f.append(f"{v}[{i}:v]xfade=transition={tr}:duration={T}:offset={off:.3f}[v{i}]")
             f.append(f"{a}[{i}:a]acrossfade=d={T}[a{i}]")
             v, a = f"[v{i}]", f"[a{i}]"
         f.append(f"{v}null[v];{a}anull[a]")
@@ -127,6 +138,12 @@ def main():
     p.add_argument("--zdjecie", type=float, default=3.0, help="ile sekund trwa zdjęcie")
     p.add_argument("--klip-maks", type=float, default=0, help="maks. długość klipu w s (0 = cały)")
     p.add_argument("--przejscie", type=float, default=0.5, help="długość przejścia w s")
+    p.add_argument("--tlo", choices=["przyciete", "rozmyte"], default="przyciete",
+                   help="zdjęcia: przyciete = wypełnij kadr, rozmyte = całe zdjęcie na rozmytym tle")
+    p.add_argument("--przejscia", default="fade", help="rodzaj przejścia ffmpeg xfade albo 'mix' (różne po kolei)")
+    p.add_argument("--bpm", type=float, default=0,
+                   help="tempo muzyki: zdjęcia zmieniają się co --takty uderzeń (nadpisuje --zdjecie)")
+    p.add_argument("--takty", type=int, default=4, help="co ile uderzeń zmiana zdjęcia (z --bpm)")
     p.add_argument("--glosnosc-klipow", type=float, default=0.3, help="głośność dźwięku z klipów, gdy jest muzyka")
     a = p.parse_args()
 
@@ -139,6 +156,10 @@ def main():
         sys.exit(f"Brak zdjęć/klipów w {a.wejscie}")
 
     w, h = FORMATY[a.format]
+    if a.bpm:
+        # cięcie co N uderzeń: długość ujęcia = N * beat + przejście
+        a.zdjecie = round(a.takty * 60 / a.bpm + a.przejscie, 3)
+        print(f"Tempo {a.bpm} BPM -> zdjęcie {a.zdjecie} s")
     a.wyjscie.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         segmenty = []
@@ -146,12 +167,12 @@ def main():
             dst = Path(tmp) / f"{i:03d}.mp4"
             print(f"[{i+1}/{len(media)}] {src.name}")
             if src.suffix.lower() in IMG:
-                segment_zdjecie(src, dst, w, h, a.zdjecie, i)
+                segment_zdjecie(src, dst, w, h, a.zdjecie, i, a.tlo)
             else:
                 segment_klip(src, dst, w, h, a.klip_maks)
             segmenty.append(dst)
         print("Sklejanie" + (f" z muzyką {muzyka.name}" if muzyka else "") + "...")
-        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow)
+        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow, a.przejscia)
     print(f"Gotowe: {a.wyjscie} ({total:.1f} s, {w}x{h})")
 
 

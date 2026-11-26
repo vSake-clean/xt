@@ -28,14 +28,42 @@ python3 montaz.py --wyjscie gotowe/wakacje.mp4
 | `--zdjecie` | `3` | czas jednego zdjęcia (s) |
 | `--klip-maks` | `0` | maks. długość klipu (s), `0` = cały klip |
 | `--przejscie` | `0.5` | długość przejścia (s) |
+| `--tlo` | `przyciete` | `przyciete` = zdjęcie wypełnia kadr, `rozmyte` = całe zdjęcie na rozmytym tle (dobre do kwadratowych/małych zdjęć) |
+| `--przejscia` | `fade` | rodzaj przejścia (`fade`, `slideleft`, `circleopen`, `zoomin`…) albo `mix` = różne po kolei |
+| `--bpm` / `--takty` | `0` / `4` | cięcie do rytmu: zmiana zdjęcia co N uderzeń muzyki |
 | `--glosnosc-klipow` | `0.3` | głośność dźwięku z klipów, gdy jest muzyka |
 | `--wejscie` / `--wyjscie` | `materialy/` / `gotowe/edit.mp4` | foldery |
+
+## Wycinanie zdjęć ze screenów
+
+Jeśli zdjęcia są screenami (np. podgląd w czacie), `wytnij.py` wycina z każdego ten sam prostokąt:
+
+```bash
+python3 wytnij.py --ramka 308,1576,463,463 screeny/*.jpg --do materialy/
+```
+
+## Przykład: edit do rytmu
+
+```bash
+python3 montaz.py --tlo rozmyte --przejscia mix --bpm 143.55 --takty 4 --przejscie 0.4
+```
+
+## Muzyka
+
+Używamy tylko muzyki na wolnej licencji, np. Kevin MacLeod (incompetech.com, CC BY 4.0).
+Przy publikacji podpisz utwór, np.: *"Monkeys Spinning Monkeys" Kevin MacLeod (incompetech.com), licencja CC BY 4.0*.
+Popularny utwór z TikToka/Instagrama najlepiej dodać już w aplikacji przy publikacji.
+
+## Prywatność
+
+`materialy/` i `gotowe/` są w `.gitignore`: zdjęcia i filmy zostają tylko lokalnie i nie trafiają na GitHuba.
 
 ## Struktura
 
 ```
 edit/
 ├── montaz.py     # skrypt montażowy (ffmpeg)
+├── wytnij.py     # wycinanie tego samego fragmentu z wielu screenów
 ├── materialy/    # tu wrzucasz zdjęcia, klipy i muzykę
 └── gotowe/       # tu trafia gotowy film
 ```
