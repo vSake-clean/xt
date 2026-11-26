@@ -22,6 +22,9 @@ FORMATY = {"pion": (1080, 1920), "poziom": (1920, 1080), "kwadrat": (1080, 1080)
 FPS = 30
 PRZEJSCIA = ["fade", "slideleft", "circleopen", "smoothup", "zoomin", "wiperight",
              "dissolve", "slideup", "radial", "smoothleft", "pixelize", "circleclose"]
+# szybkie, "rwane" przejścia do energicznych editów
+ENERGIA = ["slideleft", "zoomin", "slideup", "hblur", "slideright", "circleopen",
+           "slidedown", "squeezeh", "wipeleft", "radial", "squeezev", "smoothright"]
 
 
 def run(cmd):
@@ -50,11 +53,14 @@ def kadr(w, h):
             f"crop={w}:{h},setsar=1,fps={FPS},format=yuv420p")
 
 
-def segment_zdjecie(src, dst, w, h, czas, idx, tlo, zoom=0.15):
+def segment_zdjecie(src, dst, w, h, czas, idx, tlo, zoom=0.15, tryb="plynny"):
     klatki = int(round(czas * FPS)) + 1
     krok = zoom / klatki  # zoom zawsze o tyle samo, niezależnie od długości ujęcia
     # skaluj z zapasem, potem zoompan (naprzemiennie zoom in / zoom out)
-    if idx % 2 == 0:
+    if tryb == "punch":
+        # uderzenie: start mocno przybliżony, szybki odjazd do pełnego kadru
+        z = f"1+{zoom}*pow(max(0,1-on/{max(klatki * 0.6, 1):.1f}),2)"
+    elif idx % 2 == 0:
         z = f"min(zoom+{krok:.5f},{1+zoom})"
     else:
         z = f"if(eq(on,0),{1+zoom},max(zoom-{krok:.5f},1.0))"
@@ -93,7 +99,28 @@ def segment_klip(src, dst, w, h, maks):
     run(cmd)
 
 
-def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj, muzyka_od=0.0):
+def efekty_ciec(ciecia, w, h, jakie):
+    """Filtry wideo odpalane na każdym cięciu: błysk, trzęsienie, przesunięcie RGB."""
+    def okno(d, zanik=True):
+        if zanik:
+            return "+".join(f"between(t,{c:.3f},{c + d:.3f})*(1-(t-{c:.3f})/{d})" for c in ciecia)
+        return "+".join(f"between(t,{c:.3f},{c + d:.3f})" for c in ciecia)
+    fl = []
+    if "shake" in jakie:
+        A = int(w * 0.03)
+        env = okno(0.22)
+        fl.append(f"scale={int(w * 1.08) // 2 * 2}:{int(h * 1.08) // 2 * 2},"
+                  f"crop={w}:{h}:x='(iw-ow)/2+{A}*({env})*sin(t*91)':y='(ih-oh)/2+{A}*({env})*cos(t*67)'")
+    if "rgb" in jakie:
+        fl.append(f"rgbashift=rh=-{w // 60}:bh={w // 60}:enable='{okno(0.07, False)}'")
+    if "flash" in jakie:
+        fl.append(f"eq=brightness='0.6*({okno(0.08)})':eval=frame")
+    if "kolor" in jakie:
+        fl.append("eq=contrast=1.08:saturation=1.3")
+    return fl
+
+
+def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj, muzyka_od=0.0, efekty=(), wh=(1080, 1920)):
     dl = [duration(s) for s in segmenty]
     n = len(segmenty)
     T = min([przejscie] + [d / 2 for d in dl]) if n > 1 else 0
@@ -106,13 +133,17 @@ def sklej(segmenty, dst, przejscie, muzyka, glosnosc_klipow, rodzaj, muzyka_od=0
         total = dl[0]
     else:
         v, a, off = "[0:v]", "[0:a]", 0.0
+        ciecia = []
         for i in range(1, n):
             off += dl[i - 1] - T
-            tr = PRZEJSCIA[(i - 1) % len(PRZEJSCIA)] if rodzaj == "mix" else rodzaj
+            ciecia.append(off + T / 2)
+            lista = {"mix": PRZEJSCIA, "energia": ENERGIA}.get(rodzaj)
+            tr = lista[(i - 1) % len(lista)] if lista else rodzaj
             f.append(f"{v}[{i}:v]xfade=transition={tr}:duration={T}:offset={off:.3f}[v{i}]")
             f.append(f"{a}[{i}:a]acrossfade=d={T}[a{i}]")
             v, a = f"[v{i}]", f"[a{i}]"
-        f.append(f"{v}null[v];{a}anull[a]")
+        fx = efekty_ciec(ciecia, *wh, efekty) if efekty else []
+        f.append(f"{v}{','.join(fx) or 'null'}[v];{a}anull[a]")
         total = sum(dl) - T * (n - 1)
     dz = min(1.0, total * 0.06)  # wyciemnienie na końcu, krótsze przy krótkich filmach
     fo = max(total - dz, 0)
@@ -142,7 +173,13 @@ def main():
     p.add_argument("--przejscie", type=float, default=0.5, help="długość przejścia w s")
     p.add_argument("--tlo", choices=["przyciete", "rozmyte"], default="przyciete",
                    help="zdjęcia: przyciete = wypełnij kadr, rozmyte = całe zdjęcie na rozmytym tle")
-    p.add_argument("--przejscia", default="fade", help="rodzaj przejścia ffmpeg xfade albo 'mix' (różne po kolei)")
+    p.add_argument("--przejscia", default="fade",
+                   help="rodzaj przejścia ffmpeg xfade, 'mix' (różne po kolei) albo 'energia' (szybkie, rwane)")
+    p.add_argument("--efekty", default="",
+                   help="efekty na cięciach, po przecinku: flash, shake, rgb, kolor (albo 'wszystkie')")
+    p.add_argument("--zoom-tryb", choices=["plynny", "punch"], default="plynny",
+                   help="plynny = powolny zoom, punch = mocne uderzenie zoomem na starcie ujęcia")
+    p.add_argument("--fps", type=int, default=30, help="klatki na sekundę (60 = płynniej przy szybkich editach)")
     p.add_argument("--bpm", type=float, default=0,
                    help="tempo muzyki: zdjęcia zmieniają się co --takty uderzeń (nadpisuje --zdjecie)")
     p.add_argument("--takty", type=float, default=4, help="co ile uderzeń zmiana zdjęcia (z --bpm)")
@@ -154,6 +191,10 @@ def main():
     p.add_argument("--zoom", type=float, default=0.15, help="siła zoomu na zdjęciach (0 = bez)")
     p.add_argument("--glosnosc-klipow", type=float, default=0.3, help="głośność dźwięku z klipów, gdy jest muzyka")
     a = p.parse_args()
+    global FPS
+    FPS = a.fps
+    efekty = {"flash", "shake", "rgb", "kolor"} if a.efekty == "wszystkie" else \
+        {e.strip() for e in a.efekty.split(",") if e.strip()}
 
     if not shutil.which("ffmpeg"):
         sys.exit("Brak ffmpeg w systemie.")
@@ -185,12 +226,13 @@ def main():
             print(f"[{i+1}/{len(media)}] {src.name}")
             if src.suffix.lower() in IMG:
                 czas = a.final if (a.final and i == len(media) - 1) else a.zdjecie
-                segment_zdjecie(src, dst, w, h, czas, i, a.tlo, a.zoom)
+                segment_zdjecie(src, dst, w, h, czas, i, a.tlo, a.zoom, a.zoom_tryb)
             else:
                 segment_klip(src, dst, w, h, a.klip_maks)
             segmenty.append(dst)
         print("Sklejanie" + (f" z muzyką {muzyka.name}" if muzyka else "") + "...")
-        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow, a.przejscia, a.muzyka_od)
+        total = sklej(segmenty, a.wyjscie, a.przejscie, muzyka, a.glosnosc_klipow, a.przejscia, a.muzyka_od,
+                      efekty, (w, h))
     print(f"Gotowe: {a.wyjscie} ({total:.1f} s, {w}x{h})")
 
 

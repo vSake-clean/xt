@@ -35,6 +35,9 @@ python3 montaz.py --wyjscie gotowe/wakacje.mp4
 | `--muzyka-od` | `0` | od której sekundy utworu zacząć (gdy nie podano `--beat`) |
 | `--final` | `0` | ostatnie zdjęcie trwa tyle uderzeń (z `--bpm`) albo sekund; `0` = jak inne |
 | `--zoom` | `0.15` | siła zoomu na zdjęciach (`0` = bez zoomu) |
+| `--zoom-tryb` | `plynny` | `plynny` = powolny zoom, `punch` = mocne uderzenie zoomem na starcie każdego ujęcia |
+| `--efekty` | — | efekty na każdym cięciu: `flash` (biały błysk), `shake` (trzęsienie), `rgb` (przesunięcie kolorów), `kolor` (mocniejsze kolory) albo `wszystkie` |
+| `--fps` | `30` | klatki na sekundę, `60` = płynniej przy bardzo szybkich editach |
 | `--glosnosc-klipow` | `0.3` | głośność dźwięku z klipów, gdy jest muzyka |
 | `--wejscie` / `--wyjscie` | `materialy/` / `gotowe/edit.mp4` | foldery |
 
@@ -62,6 +65,16 @@ python3 montaz.py --tlo rozmyte --przejscia mix --bpm 120.14 --takty 1 --final 2
 ```
 
 Przy „Electrodoodle” tempo wynosi 120,14 BPM, a pierwsze uderzenie wypada w 0,035 s.
+
+Super energiczny (20 zdjęć w < 5 s, cięcie co pół uderzenia, błyski, trzęsienie, RGB, zoom-punch, 60 fps):
+
+```bash
+python3 montaz.py --tlo rozmyte --przejscia energia --efekty wszystkie --zoom-tryb punch --zoom 0.3 \
+  --fps 60 --bpm 160.2 --takty 0.5 --final 3 --beat 130.032 --przejscie 0.0627
+```
+
+Tu muzyka startuje od 130 s utworu „Electrodoodle” (najmocniejszy fragment, 160 BPM).
+Przy 60 fps przejście 0,0627 s sprawia, że każde ujęcie ma równo 15 klatek, więc cięcia nie rozjeżdżają się z bitem.
 
 ## Muzyka
 
