@@ -18,14 +18,14 @@ Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są
 | --- | --- | --- |
 | `plansza.jpg` | zrzut chess.com 1080×2460 z pozycją startową (oryginalnie `1000187442.jpg`) | tak |
 | `alien.mp4` | klip „Willy alien” 576×576, 6,6 s (`ssstik.io_1795725991721.mp4`) | tak |
-| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca i zduszony (`ssstik.io_1795725809290.mp4`) | tak |
+| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca, zduszony i carokann (`ssstik.io_1795725809290.mp4`) | tak |
 | `wzor3_speedrun.mp4` | wzór ze stoperem (`ssstik.io_1795733422678.mp4`) | nie |
 | `wzor4_szewczyk.mp4` | wzór z matem szewskim (`ssstik.io_1795737130909.mp4`) | nie |
 | `wzor5_edit.mp4` | wzór editu kinowego (`ssstik.io_1795737267636.mp4`) | nie |
 | `wzor6_kopia.mp4` | wzór Caro-Kann z zoomem (`ssstik.io_1795737810861.mp4`) | nie |
 | `wzor7_wieza.mp4` | wzór z pogonią wieżą (`ssstik.io_1795738571009.mp4`) | nie |
 
-`alien.mp4` i `wzor1.mp4` są w repo, więc mat zduszony (i filmy final, alien2, glupca) zbudujesz od razu. Pozostałych filmików z TikToka nie ma w repo (są w `.gitignore`); przed budowaniem innych filmów wrzuć je do `wejscie/` pod nazwami z tabeli.
+`alien.mp4` i `wzor1.mp4` są w repo, więc mat zduszony (i filmy final, alien2, glupca, carokann) zbudujesz od razu. Pozostałych filmików z TikToka nie ma w repo (są w `.gitignore`); przed budowaniem innych filmów wrzuć je do `wejscie/` pod nazwami z tabeli.
 
 ## Budowanie
 
@@ -45,6 +45,7 @@ Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są
 | `kopia` | `src/kopia_caro_kann.py` | `szachy_kopia.mp4` | 1. e4 c6 2. Nc3 d5 3. d4 dxe4 4. Nxe4 Nf6 5. Ng5?! Bf5 6. N1f3 h6 7. Nxf7?, pionowo | 15,3 s |
 | `wieza` | `src/pogon_wieza.py` + `src/pogon_wieza_trasa.py` | `szachy_wieza.mp4` | wieża szachuje króla dookoła planszy, zbicie wieży = pat | 17,5 s |
 | `zduszony` | `mat_zduszony.py` | `szachy_mat_zduszony.mp4` | mat zduszony Philidora: 14. Qg8+!! Rxg8 15. Nf7# | 18,7 s |
+| `carokann` | `src/speedrun_caro_kann.py` | `szachy_caro_kann_speedrun.mp4` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6#, stoper nad planszą, pionowo | 12,2 s |
 
 ## Narzędzia do nowych filmów
 

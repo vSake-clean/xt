@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -84,6 +84,12 @@ fi
 if want zduszony; then
   need alien.mp4 wzor1.mp4
   python3 "$ROOT/mat_zduszony.py" "$PLANSZA" "$IN/alien.mp4" "$IN/wzor1.mp4" szachy_mat_zduszony.mp4
+fi
+
+# 10. Speedrun Caro-Kann: 5...Ngf6?? 6. Nd6#, stoper nad plansza, muzyka wzoru 1 od 6,47 s, mat na dropie (12,2 s)
+if want carokann; then
+  need alien.mp4 wzor1.mp4
+  python3 "$SRC/speedrun_caro_kann.py" "$PLANSZA" "$IN/alien.mp4" "$IN/wzor1.mp4" szachy_caro_kann_speedrun.mp4
 fi
 
 rm -f baza_*.mp4

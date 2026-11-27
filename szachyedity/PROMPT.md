@@ -59,6 +59,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | Game Review, 3 zbliżenia, biały błysk, mem na całą planszę, pionowo | `src/kopia_caro_kann.py` |
 | pogoń wieżą, mem półprzezroczysty | `src/pogon_wieza.py` + `src/pogon_wieza_trasa.py` |
 | Game Review, zoom, mem 3×3 pola, pionowo | `mat_zduszony.py` |
+| stoper nad planszą, Game Review, mem 3×3 pola, pionowo, ruchy na bit muzyki | `src/speedrun_caro_kann.py` |
 
 4. Partię sprawdź w python-chess: każdy ruch przez `board.parse_san()`, na końcu `is_checkmate()`; dla memów dodatkowe asercje (np. „każdy ruch wieży daje szacha”, „każde zbicie wieży daje pata”).
 5. Zbuduj film, zrób klatki kontrolne, porównaj je ze wzorem w tych samych sekundach i sprawdź `ffprobe` (wideo i audio mają długość wzoru).
@@ -84,6 +85,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | `kopia` | 1. e4 c6 2. Nc3 d5 3. d4 dxe4 4. Nxe4 Nf6 5. Ng5?! Bf5 6. N1f3 h6 7. Nxf7?, 3 zbliżenia, błysk 8,3 s, mem od 8,6 s | 15,3 s |
 | `wieza` | biały Ka1 bez ruchów, wieża szachuje króla dookoła planszy (96 półruchów), zbicie wieży = pat | 17,5 s |
 | `zduszony` | mat zduszony (sekcja 8) | 18,7 s |
+| `carokann` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6# (mat zduszony w 6 ruchach), stoper nad planszą; ruchy na basie wzoru 1, muzyka od 6,47 s, mat w 5,56 s na dropie, alien w a3–c5 od 5,63 s | 12,2 s |
 
 Opinie użytkownika: pierwsze filmy „piękne”, edit kinowy „super, ale o wiele za długi”.
 
