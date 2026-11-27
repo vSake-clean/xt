@@ -13,7 +13,8 @@ FPS = 30
 DUR = 17.5
 NF = int(round(DUR * FPS))
 CLIP, AUDIO, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
-FONT = '/usr/share/fonts/opentype/inter/'
+import os
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonty', '')   # czcionki z repo (fonty/)
 
 COL = {'great': (116, 155, 191), 'brilliant': (38, 194, 163), 'best': (129, 182, 76)}
 BADGE = {'great': (92, 139, 176), 'brilliant': (38, 194, 163), 'best': (129, 182, 76)}

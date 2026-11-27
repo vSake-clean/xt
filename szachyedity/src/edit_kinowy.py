@@ -16,7 +16,8 @@ DUR = END - T0
 NF = int(round(DUR * FPS))
 AUDIO = sys.argv[2] if len(sys.argv) > 2 else None
 OUTFILE = sys.argv[1] if len(sys.argv) > 1 else 'edit.mp4'
-FONT = '/usr/share/fonts/opentype/inter/'
+import os
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonty', '')   # czcionki z repo (fonty/)
 
 # ---------------------------------------------------------------- assets (grayscale look)
 def gray3(a):

@@ -1,3 +1,4 @@
+import os
 import sys, subprocess
 import numpy as np
 from PIL import Image, ImageDraw
@@ -133,7 +134,7 @@ def make_badge(d=62):
     dr = ImageDraw.Draw(im)
     dr.ellipse((ss * 2, ss * 3, D - ss * 2, D - ss * 1), fill=(0, 0, 0, 70))      # soft shadow
     dr.ellipse((ss * 2, ss * 1, D - ss * 2, D - ss * 3), fill=(202, 52, 49, 255))  # red disc
-    f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', int(D * 0.5))
+    f = ImageFont.truetype(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonty', 'DejaVuSans-Bold.ttf'), int(D * 0.5))
     bb = dr.textbbox((0, 0), '??', font=f)
     tw, th = bb[2] - bb[0], bb[3] - bb[1]
     dr.text(((D - tw) / 2 - bb[0], (D - ss * 2 - th) / 2 - bb[1]), '??', font=f, fill=(255, 255, 255, 255))

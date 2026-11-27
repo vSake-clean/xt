@@ -2,11 +2,15 @@
 
 Generator krótkich filmików szachowych na TikToka. Partia jest animowana na zielonej planszy chess.com wyciętej ze zrzutu ekranu, z ocenami ruchów jak w „Game Review” (Book, Best, Great, Brilliant, Blunder), zbliżeniami, błyskami, memem (klip z alienem) i muzyką z filmiku-wzoru. Każda partia jest sprawdzana w python-chess, więc w filmach nie ma nielegalnych ruchów.
 
-## Wymagania
+Dla AI, które zaczyna od zera: najpierw `PROMPT.md` (pełny kontekst, zasady i zadanie), skrót zasad jest w `CLAUDE.md`.
 
-- Python 3 z `numpy`, `pillow`, `scipy` i `chess`: `pip install numpy pillow scipy` oraz `pip install --only-binary=:all: chess`
-- ffmpeg i ffprobe
-- czcionka Inter (Bold, SemiBold, ExtraLight) w `/usr/share/fonts/opentype/inter/`
+## Instalacja
+
+```bash
+./ustaw.sh   # numpy, pillow, scipy, python-chess (requirements.txt) + sprawdzenie ffmpeg
+```
+
+Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są w `fonty/`, więc nic więcej nie trzeba instalować.
 
 ## Pliki wejściowe (`wejscie/`)
 
@@ -42,8 +46,13 @@ Filmiki z TikToka zawierają cudzą muzykę i klipy, więc nie ma ich w tym publ
 | `wieza` | `src/pogon_wieza.py` + `src/pogon_wieza_trasa.py` | `szachy_wieza.mp4` | wieża szachuje króla dookoła planszy, zbicie wieży = pat | 17,5 s |
 | `zduszony` | `mat_zduszony.py` | `szachy_mat_zduszony.mp4` | mat zduszony Philidora: 14. Qg8+!! Rxg8 15. Nf7# | 18,7 s |
 
+## Narzędzia do nowych filmów
+
+- `python3 src/analiza_wzoru.py WZOR.mp4` rozbiera filmik-wzór: położenie planszy, cięcia i błyski, momenty zmian na polach (ruchy), beat muzyki. Zapisuje arkusze klatek, kadry planszy po każdej zmianie i `analiza.json`.
+- `python3 src/dopasuj_klip.py WZOR.mp4 wejscie/alien.mp4 T_PRZED T_PO [x y w h]` ustala, gdzie, od kiedy, jak przezroczyście i w jakim tempie we wzorze leci mem. `T_PRZED` to sekunda bez klipu, `T_PO` sekunda z klipem.
+
 ## Pozostałe pliki
 
 - `src/assets.py` wycina planszę i figury ze zrzutu (zmienna `PLANSZA` albo `wejscie/plansza.jpg`) i zamalowuje pasek przewijania widoczny na zrzucie.
 - `mat_zduszony.py` działa samodzielnie, bez `src/`: `python3 mat_zduszony.py PLANSZA.jpg MEM.mp4 MUZYKA.mp4 wynik.mp4`.
-- `prompt_mat_zduszony.md` to prompt dla innego AI: podsumowanie całej pracy, zasady i zadanie „zrób film z matem zduszonym” z gotowym skryptem.
+- `PROMPT.md` to prompt startowy dla AI z dostępem tylko do GitHuba: podsumowanie całej pracy, zasady, sposób robienia nowych filmów i zadanie „zrób film z matem zduszonym”.

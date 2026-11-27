@@ -2,14 +2,14 @@
 #   python3 mat_zduszony.py PLANSZA.jpg MEM.mp4 MUZYKA.mp4 szachy_mat_zduszony.mp4
 # PLANSZA = zrzut chess.com 1080x2460 z pozycja startowa, MEM = klip z alienem (576x576, 6,6 s),
 # MUZYKA = filmik, z ktorego bierzemy audio (pierwszy wzor z alienem, 18,7 s).
-import sys, math, subprocess
+import os, sys, math, subprocess
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from scipy import ndimage
 import chess
 
 PLANSZA, MEM, MUZYKA, OUT = sys.argv[1:5]
-FONT = '/usr/share/fonts/opentype/inter/'          # Inter Bold / SemiBold / ExtraLight
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonty', '')   # czcionki z repo (fonty/)
 S, TOP = 135, 754                                  # pole 135 px; plansza 1080x1080 od y=754 na zrzucie
 LIGHT, DARK = np.array([238, 238, 210.]), np.array([118, 150, 85.])
 B = 8 * S

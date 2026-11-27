@@ -14,7 +14,8 @@ NF = int(round(DUR * FPS))
 CLIP = sys.argv[1]
 AUDIO = sys.argv[2]
 OUT = sys.argv[3]
-FONT = '/usr/share/fonts/opentype/inter/'
+import os
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonty', '')   # czcionki z repo (fonty/)
 
 # ---------------------------------------------------------------- classification look (chess.com review)
 HL = {'book': (213, 164, 125), 'inacc': (247, 198, 49), 'exc': (150, 188, 75), 'best': (129, 182, 76), 'mist': (255, 164, 89)}

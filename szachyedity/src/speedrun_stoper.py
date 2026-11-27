@@ -93,7 +93,8 @@ import math
 FPS = 30
 TOTAL = int(sys.argv[3]) if len(sys.argv) > 3 else 407
 W = 8 * S
-FONT = '/usr/share/fonts/opentype/inter/'
+import os
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonty', '')   # czcionki z repo (fonty/)
 
 def to_rgba(piece):
     F, a = sprites[piece]
