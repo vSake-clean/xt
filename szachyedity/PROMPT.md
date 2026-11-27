@@ -89,7 +89,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | `carokann` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6# (mat zduszony w 6 ruchach), stoper nad planszą; ruchy na basie wzoru 1, muzyka od 6,47 s, mat w 5,56 s na dropie, alien w a3–c5 od 5,63 s | 12,2 s |
 | `fastest` | dosłowna kopia wzoru 8 „MY FASTEST CHECKMATE”: 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, ruchy w klatkach wzoru (start 16/43/71/98/126/148/171, lądowanie +4), stoper od klatki 10,3, staje na 00:05.37; od 5,83 s przyciemnienie gradientem, duży napis „00:05.37 / MY FASTEST CHECKMATE”, odznaki zamiast dymków „Pemenang”/„Sekakmat” | 9,6 s |
 
-Opinie użytkownika: pierwsze filmy „piękne”, edit kinowy „super, ale o wiele za długi”.
+Opinie użytkownika: pierwsze filmy „piękne”, edit kinowy „super, ale o wiele za długi”. **Viral:** `zduszony` i `carokann` poszły w viral. Wspólny przepis: mat zduszony skoczkiem, pionowo 1080×1920, muzyka z `wzor1` z matem na dropie, alien w a3–c5 od razu po macie, czerwone pole króla, korona i plakietka; w `carokann` dodatkowo stoper nad planszą (zielony po macie). Nowe filmy rób najpierw według tego przepisu.
 
 ## 7. Błędy, które już naprawiliśmy (nie powtarzaj)
 
