@@ -17,15 +17,15 @@ Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są
 | Plik | Co to jest | W repo |
 | --- | --- | --- |
 | `plansza.jpg` | zrzut chess.com 1080×2460 z pozycją startową (oryginalnie `1000187442.jpg`) | tak |
-| `alien.mp4` | klip „Willy alien” 576×576, 6,6 s (`ssstik.io_1795725991721.mp4`) | nie |
-| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca i zduszony (`ssstik.io_1795725809290.mp4`) | nie |
+| `alien.mp4` | klip „Willy alien” 576×576, 6,6 s (`ssstik.io_1795725991721.mp4`) | tak |
+| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca i zduszony (`ssstik.io_1795725809290.mp4`) | tak |
 | `wzor3_speedrun.mp4` | wzór ze stoperem (`ssstik.io_1795733422678.mp4`) | nie |
 | `wzor4_szewczyk.mp4` | wzór z matem szewskim (`ssstik.io_1795737130909.mp4`) | nie |
 | `wzor5_edit.mp4` | wzór editu kinowego (`ssstik.io_1795737267636.mp4`) | nie |
 | `wzor6_kopia.mp4` | wzór Caro-Kann z zoomem (`ssstik.io_1795737810861.mp4`) | nie |
 | `wzor7_wieza.mp4` | wzór z pogonią wieżą (`ssstik.io_1795738571009.mp4`) | nie |
 
-Filmiki z TikToka zawierają cudzą muzykę i klipy, więc nie ma ich w tym publicznym repo (są w `.gitignore`). Przed budowaniem wrzuć je do `wejscie/` pod nazwami z tabeli.
+`alien.mp4` i `wzor1.mp4` są w repo, więc mat zduszony (i filmy final, alien2, glupca) zbudujesz od razu. Pozostałych filmików z TikToka nie ma w repo (są w `.gitignore`); przed budowaniem innych filmów wrzuć je do `wejscie/` pod nazwami z tabeli.
 
 ## Budowanie
 

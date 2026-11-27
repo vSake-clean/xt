@@ -6,6 +6,6 @@ Zanim cokolwiek zrobisz, przeczytaj `PROMPT.md` (pełny kontekst, zasady i zadan
 - Każdą partię sprawdzasz w python-chess. Wygrywają białe, chyba że użytkownik powie inaczej.
 - Napisy po angielsku. Po macie bez dymków „Winner”/„Checkmate” i bez przewracania króla.
 - Długość, muzyka i moment wejścia mema jak we wzorze. Gra szybka, filmy krótkie (ok. 15 s).
-- Nie commituj filmików z TikToka ani gotowych `.mp4` (repo jest publiczne, są w `.gitignore`).
+- Nie commituj kolejnych filmików z TikToka ani gotowych `.mp4` (repo jest publiczne, są w `.gitignore`). W repo są tylko `wejscie/alien.mp4` i `wejscie/wzor1.mp4`.
 - Commity bez Claude ani AI jako współautora; autor: `vSake-clean <vSake-clean@users.noreply.github.com>`.
 - Raport dla użytkownika po polsku, krótko.

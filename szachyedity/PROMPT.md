@@ -6,7 +6,7 @@ Jesteś kontynuacją wcześniejszej sesji z AI. Wszystko, co wtedy powstało (ko
 
 1. Sklonuj repo i wejdź do `szachyedity/`. Przeczytaj `README.md` (pliki, filmy, polecenia).
 2. Uruchom `./ustaw.sh`: instaluje numpy, pillow, scipy i python-chess oraz sprawdza ffmpeg. Czcionki są w `fonty/`, plansza w `wejscie/plansza.jpg`.
-3. Poproś użytkownika o filmiki z TikToka, których nie ma w publicznym repo: do maty zduszonego potrzebne są `alien.mp4` (klip „Willy alien”) i `wzor1.mp4` (pierwszy wzór, z niego jest muzyka). Pełna lista nazw jest w `README.md`. Zapisz je w `wejscie/` pod tymi nazwami; są w `.gitignore`, nie commituj ich.
+3. `wejscie/alien.mp4` (klip „Willy alien”) i `wejscie/wzor1.mp4` (pierwszy wzór, z niego jest muzyka) są w repo, więc do maty zduszonego nie potrzebujesz nic od użytkownika. Pozostałe filmiki z TikToka (lista w `README.md`) dostaniesz od użytkownika, gdy będą potrzebne; zapisz je w `wejscie/` pod nazwami z listy i nie commituj ich.
 4. Zrób zadanie z sekcji 8.
 
 ## 1. Cel
@@ -62,7 +62,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 
 4. Partię sprawdź w python-chess: każdy ruch przez `board.parse_san()`, na końcu `is_checkmate()`; dla memów dodatkowe asercje (np. „każdy ruch wieży daje szacha”, „każde zbicie wieży daje pata”).
 5. Zbuduj film, zrób klatki kontrolne, porównaj je ze wzorem w tych samych sekundach i sprawdź `ffprobe` (wideo i audio mają długość wzoru).
-6. Dopisz film do `buduj.sh` i tabeli w `README.md`. Commit: tylko kod i opis, bez filmików z TikToka i gotowych `.mp4` (repo jest publiczne), autor `vSake-clean <vSake-clean@users.noreply.github.com>`, bez współautora Claude/AI.
+6. Dopisz film do `buduj.sh` i tabeli w `README.md`. Commit: tylko kod i opis, bez nowych filmików z TikToka i gotowych `.mp4` (repo jest publiczne; wyjątkiem są tylko `alien.mp4` i `wzor1.mp4`), autor `vSake-clean <vSake-clean@users.noreply.github.com>`, bez współautora Claude/AI.
 
 ## 5. Techniki i parametry
 
@@ -103,7 +103,7 @@ Opinie użytkownika: pierwsze filmy „piękne”, edit kinowy „super, ale o w
 
 ## 8. ZADANIE NA TERAZ: film z matem zduszonym
 
-Zrób `szachy_mat_zduszony.mp4`: po instalacji i dodaniu `wejscie/alien.mp4` oraz `wejscie/wzor1.mp4` uruchom `./buduj.sh zduszony`. Film pojawi się w `build/`. Skrypt `mat_zduszony.py` jest sprawdzony i daje dokładnie ten film:
+Zrób `szachy_mat_zduszony.mp4`: po instalacji (`./ustaw.sh`) uruchom `./buduj.sh zduszony` (`wejscie/alien.mp4` i `wejscie/wzor1.mp4` są w repo). Film pojawi się w `build/`. Skrypt `mat_zduszony.py` jest sprawdzony i daje dokładnie ten film:
 
 - Partia (wygrywają białe, mat zduszony Philidora z poświęceniem hetmana): 1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bxc6 dxc6 8. c3 O-O 9. d4 Nf5 10. Nd2 f6?? 11. Qb3+ Kh8 12. Nf7+ Kg8?? 13. Nh6+ Kh8 14. Qg8+!! Rxg8 15. Nf7#. Po 13. Nh6+ i po 14. Qg8+ czarne mają tylko jeden legalny ruch.
 - Format: pionowo 1080×1920, plansza 1080×1080 na środku (y 420–1500), czarne tło, 30 kl./s, 18,7 s, muzyka z `wzor1.mp4` od 0 s.
