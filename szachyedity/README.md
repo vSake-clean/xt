@@ -10,7 +10,7 @@ Dla AI, które zaczyna od zera: najpierw `PROMPT.md` (pełny kontekst, zasady i 
 ./ustaw.sh   # numpy, pillow, scipy, python-chess (requirements.txt) + sprawdzenie ffmpeg
 ```
 
-Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są w `fonty/`, więc nic więcej nie trzeba instalować.
+Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bold, z licencjami) są w `fonty/`, więc nic więcej nie trzeba instalować.
 
 ## Pliki wejściowe (`wejscie/`)
 
@@ -24,6 +24,7 @@ Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są
 | `wzor5_edit.mp4` | wzór editu kinowego (`ssstik.io_1795737267636.mp4`) | nie |
 | `wzor6_kopia.mp4` | wzór Caro-Kann z zoomem (`ssstik.io_1795737810861.mp4`) | nie |
 | `wzor7_wieza.mp4` | wzór z pogonią wieżą (`ssstik.io_1795738571009.mp4`) | nie |
+| `wzor8_fastest.mp4` | wzór „MY FASTEST CHECKMATE” ze stoperem (`ssstik.io_1795767131355.mp4`) | nie |
 
 `alien.mp4` i `wzor1.mp4` są w repo, więc mat zduszony (i filmy final, alien2, glupca, carokann) zbudujesz od razu. Pozostałych filmików z TikToka nie ma w repo (są w `.gitignore`); przed budowaniem innych filmów wrzuć je do `wejscie/` pod nazwami z tabeli.
 
@@ -46,6 +47,7 @@ Czcionki (Inter Bold, SemiBold, ExtraLight i DejaVu Sans Bold, z licencjami) są
 | `wieza` | `src/pogon_wieza.py` + `src/pogon_wieza_trasa.py` | `szachy_wieza.mp4` | wieża szachuje króla dookoła planszy, zbicie wieży = pat | 17,5 s |
 | `zduszony` | `mat_zduszony.py` | `szachy_mat_zduszony.mp4` | mat zduszony Philidora: 14. Qg8+!! Rxg8 15. Nf7# | 18,7 s |
 | `carokann` | `src/speedrun_caro_kann.py` | `szachy_caro_kann_speedrun.mp4` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6#, stoper nad planszą, pionowo | 12,2 s |
+| `fastest` | `src/kopia_fastest.py` | `szachy_fastest_checkmate.mp4` | 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, dosłowna kopia wzoru 8, kwadrat | 9,6 s |
 
 ## Narzędzia do nowych filmów
 

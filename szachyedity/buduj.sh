@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -90,6 +90,12 @@ fi
 if want carokann; then
   need alien.mp4 wzor1.mp4
   python3 "$SRC/speedrun_caro_kann.py" "$PLANSZA" "$IN/alien.mp4" "$IN/wzor1.mp4" szachy_caro_kann_speedrun.mp4
+fi
+
+# 11. Doslowna kopia wzoru 8 "MY FASTEST CHECKMATE": 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, kwadrat 1080x1080 (9,6 s)
+if want fastest; then
+  need wzor8_fastest.mp4
+  python3 "$SRC/kopia_fastest.py" "$IN/wzor8_fastest.mp4" szachy_fastest_checkmate.mp4
 fi
 
 rm -f baza_*.mp4

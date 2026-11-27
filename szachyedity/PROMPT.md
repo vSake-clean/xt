@@ -39,7 +39,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | `src/dopasuj_klip.py` | ustala, gdzie, od kiedy, jak przezroczyście i w jakim tempie we wzorze leci mem |
 | `buduj.sh` | buduje wszystkie filmy do `build/` (`./buduj.sh zduszony` = jeden film) |
 | `ustaw.sh`, `requirements.txt` | instalacja zależności |
-| `fonty/` | Inter (Bold, SemiBold, ExtraLight) i DejaVu Sans Bold z licencjami |
+| `fonty/` | Inter (Regular, SemiBold, Bold, ExtraBold, ExtraLight) i DejaVu Sans Bold z licencjami |
 | `CLAUDE.md` | skrót zasad dla AI |
 
 ## 4. Jak zrobić nowy film na podstawie wzoru
@@ -60,6 +60,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | pogoń wieżą, mem półprzezroczysty | `src/pogon_wieza.py` + `src/pogon_wieza_trasa.py` |
 | Game Review, zoom, mem 3×3 pola, pionowo | `mat_zduszony.py` |
 | stoper nad planszą, Game Review, mem 3×3 pola, pionowo, ruchy na bit muzyki | `src/speedrun_caro_kann.py` |
+| stoper na polach a3–c3, smuga za ruchem, zbita figura gaśnie, przyciemnienie gradientem + duży napis, kwadrat | `src/kopia_fastest.py` |
 
 4. Partię sprawdź w python-chess: każdy ruch przez `board.parse_san()`, na końcu `is_checkmate()`; dla memów dodatkowe asercje (np. „każdy ruch wieży daje szacha”, „każde zbicie wieży daje pata”).
 5. Zbuduj film, zrób klatki kontrolne, porównaj je ze wzorem w tych samych sekundach i sprawdź `ffprobe` (wideo i audio mają długość wzoru).
@@ -86,6 +87,7 @@ Użytkownik pisze po polsku, gra białymi i robi krótkie filmiki szachowe na Ti
 | `wieza` | biały Ka1 bez ruchów, wieża szachuje króla dookoła planszy (96 półruchów), zbicie wieży = pat | 17,5 s |
 | `zduszony` | mat zduszony (sekcja 8) | 18,7 s |
 | `carokann` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6# (mat zduszony w 6 ruchach), stoper nad planszą; ruchy na basie wzoru 1, muzyka od 6,47 s, mat w 5,56 s na dropie, alien w a3–c5 od 5,63 s | 12,2 s |
+| `fastest` | dosłowna kopia wzoru 8 „MY FASTEST CHECKMATE”: 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, ruchy w klatkach wzoru (start 16/43/71/98/126/148/171, lądowanie +4), stoper od klatki 10,3, staje na 00:05.37; od 5,83 s przyciemnienie gradientem, duży napis „00:05.37 / MY FASTEST CHECKMATE”, odznaki zamiast dymków „Pemenang”/„Sekakmat” | 9,6 s |
 
 Opinie użytkownika: pierwsze filmy „piękne”, edit kinowy „super, ale o wiele za długi”.
 
