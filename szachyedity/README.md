@@ -18,7 +18,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | --- | --- | --- |
 | `plansza.jpg` | zrzut chess.com 1080×2460 z pozycją startową (oryginalnie `1000187442.jpg`) | tak |
 | `alien.mp4` | klip „Willy alien” 576×576, 6,6 s (`ssstik.io_1795725991721.mp4`) | tak |
-| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca, zduszony i carokann (`ssstik.io_1795725809290.mp4`) | tak |
+| `wzor1.mp4` | pierwszy wzór z alienem, muzyka do filmów final, alien2, glupca, zduszony, carokann i legal (`ssstik.io_1795725809290.mp4`) | tak |
 | `wzor3_speedrun.mp4` | wzór ze stoperem (`ssstik.io_1795733422678.mp4`) | nie |
 | `wzor4_szewczyk.mp4` | wzór z matem szewskim (`ssstik.io_1795737130909.mp4`) | nie |
 | `wzor5_edit.mp4` | wzór editu kinowego (`ssstik.io_1795737267636.mp4`) | nie |
@@ -48,6 +48,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `zduszony` | `mat_zduszony.py` | `szachy_mat_zduszony.mp4` | mat zduszony Philidora: 14. Qg8+!! Rxg8 15. Nf7# | 18,7 s |
 | `carokann` | `src/speedrun_caro_kann.py` | `szachy_caro_kann_speedrun.mp4` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6#, stoper nad planszą, pionowo | 12,2 s |
 | `fastest` | `src/kopia_fastest.py` | `szachy_fastest_checkmate.mp4` | 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, dosłowna kopia wzoru 8, kwadrat | 9,6 s |
+| `legal` | `src/speedrun_legal.py` | `szachy_mat_legala.mp4` | 1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6? 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, pionowo | 13,5 s |
 
 ## Narzędzia do nowych filmów
 

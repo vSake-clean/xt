@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -96,6 +96,12 @@ fi
 if want fastest; then
   need wzor8_fastest.mp4
   python3 "$SRC/kopia_fastest.py" "$IN/wzor8_fastest.mp4" szachy_fastest_checkmate.mp4
+fi
+
+# 12. Mat Legala w przepisie viralowych filmow: 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, alien (13,5 s)
+if want legal; then
+  need alien.mp4 wzor1.mp4
+  python3 "$SRC/speedrun_legal.py" "$PLANSZA" "$IN/alien.mp4" "$IN/wzor1.mp4" szachy_mat_legala.mp4
 fi
 
 rm -f baza_*.mp4
