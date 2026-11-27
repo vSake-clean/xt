@@ -16,3 +16,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
+| [`szachyedity/`](szachyedity/) | Szachy edity: generator filmików szachowych na TikToka (plansza chess.com, oceny ruchów, memy, muzyka) | Python + ffmpeg | [`szachyedity/buduj.sh`](szachyedity/buduj.sh) (buduje filmy do `build/`) |
