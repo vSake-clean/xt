@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal magnus)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal magnus fischer)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -109,6 +109,13 @@ if want magnus; then
   need wzor9_magnus_a.mp4
   python3 "$SRC/pobierz_zdjecia.py"          # zdjecia z artykulow Chess.com o meczu 2016 do wejscie/zdjecia
   python3 "$SRC/edit_magnus.py" "$IN/wzor9_magnus_a.mp4" szachy_edit_magnus.mp4
+fi
+
+# 14. Kinowy edit o Fischerze w stylu wzoru 10: Fischer - Spasski, Reykjavik 1972, partia 6, 38. Rxf6!! 41. Qf4 1-0 (19,4 s)
+if want fischer; then
+  need wzor10_magnus_b.mp4
+  python3 "$SRC/pobierz_zdjecia.py"
+  python3 "$SRC/edit_fischer.py" "$IN/wzor10_magnus_b.mp4" szachy_edit_fischer.mp4
 fi
 
 rm -f baza_*.mp4

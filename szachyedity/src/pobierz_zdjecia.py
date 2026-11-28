@@ -1,5 +1,5 @@
-# pobierz_zdjecia.py - pobiera zdjecia do editu o Magnusie (src/edit_magnus.py) do wejscie/zdjecia/.
-# Zrodlo: artykuly Chess.com o meczu o MS 2016 (Carlsen - Karjakin). To zdjecia prasowe z prawami autorskimi
+# pobierz_zdjecia.py - pobiera zdjecia do editow-kolazy (src/edit_magnus.py, src/edit_fischer.py) do wejscie/zdjecia/.
+# Zrodla: artykuly Chess.com i ChessBase (mecz o MS 2016 Carlsen - Karjakin; Fischer, Reykjavik 1972). To zdjecia prasowe z prawami autorskimi
 # Chess.com (nie wolna licencja): nie trafiaja do repo, w filmie jest podpis "Photos: Chess.com", a za publikacje
 # odpowiada autor filmu. Uzycie: python3 src/pobierz_zdjecia.py
 import os, subprocess, time
@@ -16,6 +16,14 @@ ZDJECIA = {  # plik -> adres (artykul: chess.com/article/view/carlsen-karjakin-w
     'oboje.jpg': U + 'news/365002.ea82d914.5000x5000o.dbeca1169d91.jpeg',
     'magnus_usmiech.jpg': U + 'images_users/tiny_mce/PeterDoggers/phpUFOw6M.jpeg',
     'puchar.jpg': U + 'images_users/tiny_mce/pete/phpJdpW2T.jpeg',
+    # Fischer (chess.com/players/bobby-fischer, chess.com/article/view/50-year-anniversary-fischer-spassky-game-6,
+    #          en.chessbase.com/post/50-years-ago-today-fischer-spassky-game-six)
+    'fischer_rece.jpg': U + 'images_users/tiny_mce/NiiLoC/phpByWveT.jpeg',
+    'fischer_tal_usa.jpg': U + 'images_users/tiny_mce/NiiLoC/phpk0ppHF.jpeg',
+    'fischer_usmiech.jpg': U + 'images_users/tiny_mce/davidkaufmann/phphbOfs1.jpeg',
+    'fischer_uscisk.jpg': U + 'images_users/tiny_mce/AnthonyLevin/php7UN4FE.jpeg',
+    'fischer_autografy.jpg': U + 'images_users/tiny_mce/AnthonyLevin/phpm01TNB.jpeg',
+    'fischer_spasski.jpg': 'https://en.chessbase.com/Portals/All/2017/_eng/ff/reykjavik51-fischer-spassky.jpg',
 }
 
 if __name__ == '__main__':
