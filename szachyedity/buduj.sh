@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal magnus fischer)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal magnus fischer tweenslop)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -116,6 +116,12 @@ if want fischer; then
   need wzor10_magnus_b.mp4
   python3 "$SRC/pobierz_zdjecia.py"
   python3 "$SRC/edit_fischer.py" "$IN/wzor10_magnus_b.mp4" szachy_edit_fischer.mp4
+fi
+
+# 15. Tweenslop: wycieta postac (Magnus) najpierw spokojnie, od dropu funku szaleje na kazdy bit; muzyka generowana (12,6 s)
+if want tweenslop; then
+  python3 "$SRC/pobierz_zdjecia.py"
+  python3 "$SRC/tweenslop.py" "$IN/zdjecia/magnus_usmiech.jpg" szachy_tweenslop_magnus.mp4
 fi
 
 rm -f baza_*.mp4

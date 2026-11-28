@@ -53,6 +53,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `legal` | `src/speedrun_legal.py` | `szachy_mat_legala.mp4` | 1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6? 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, pionowo | 13,5 s |
 | `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit-kolaż ze zdjęciami z meczu (Chess.com), pionowo | 19,2 s |
 | `fischer` | `src/edit_fischer.py` | `szachy_edit_fischer.mp4` | Fischer – Spasski, Reykjavik 1972, partia 6: 38. Rxf6!! … 41. Qf4 1-0, kinowy edit-kolaż bez planszy (zdjęcia na sznurkach, USA kontra ZSRR, zegar, gwiazdy), pionowo | 19,4 s |
+| `tweenslop` | `src/tweenslop.py` | `szachy_tweenslop_magnus.mp4` | styl „tweenslop”: wycięty Magnus spokojnie, a od dropu funku zgniatanie, rozciąganie, obroty i smugi na każdy bit; beat funk 130 BPM generowany kodem | 12,6 s |
 
 ## Narzędzia do nowych filmów
 
