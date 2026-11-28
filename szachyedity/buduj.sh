@@ -2,7 +2,7 @@
 # Buduje wszystkie filmy do katalogu build/.
 # Wymaga plikow w wejscie/ (opis w README.md): plansza.jpg (jest w repo) + filmiki z TikToka (nie ma ich w repo).
 # Uzycie:  ./buduj.sh            - wszystkie filmy
-#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal)
+#          ./buduj.sh zduszony   - tylko jeden (nazwy: final alien2 glupca speedrun szewczyk edit kopia wieza zduszony carokann fastest legal magnus)
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(pwd)
@@ -102,6 +102,12 @@ fi
 if want legal; then
   need alien.mp4 wzor1.mp4
   python3 "$SRC/speedrun_legal.py" "$PLANSZA" "$IN/alien.mp4" "$IN/wzor1.mp4" szachy_mat_legala.mp4
+fi
+
+# 13. Kinowy edit o Magnusie w stylu wzoru 9: Carlsen - Karjakin, dogrywka MS 2016, 50. Qh6+!! 1-0 (19,2 s)
+if want magnus; then
+  need wzor9_magnus_a.mp4
+  python3 "$SRC/edit_magnus.py" "$IN/wzor9_magnus_a.mp4" szachy_edit_magnus.mp4
 fi
 
 rm -f baza_*.mp4

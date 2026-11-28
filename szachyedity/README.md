@@ -25,6 +25,8 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `wzor6_kopia.mp4` | wzór Caro-Kann z zoomem (`ssstik.io_1795737810861.mp4`) | nie |
 | `wzor7_wieza.mp4` | wzór z pogonią wieżą (`ssstik.io_1795738571009.mp4`) | nie |
 | `wzor8_fastest.mp4` | wzór „MY FASTEST CHECKMATE” ze stoperem (`ssstik.io_1795767131355.mp4`) | nie |
+| `wzor9_magnus_a.mp4` | kinowy kolaż o Levym i Magnusie, muzyka do edytu `magnus` (`712eb9d795bdc06685490143b6eb28e8.mp4`) | nie |
+| `wzor10_magnus_b.mp4` | kinowy kolaż o Fischerze (zimna wojna), jeszcze nieużyty (`9e8d810080d92042a972cc3ff56606ad.mp4`) | nie |
 
 `alien.mp4` i `wzor1.mp4` są w repo, więc mat zduszony (i filmy final, alien2, glupca, carokann) zbudujesz od razu. Pozostałych filmików z TikToka nie ma w repo (są w `.gitignore`); przed budowaniem innych filmów wrzuć je do `wejscie/` pod nazwami z tabeli.
 
@@ -49,6 +51,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `carokann` | `src/speedrun_caro_kann.py` | `szachy_caro_kann_speedrun.mp4` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6#, stoper nad planszą, pionowo | 12,2 s |
 | `fastest` | `src/kopia_fastest.py` | `szachy_fastest_checkmate.mp4` | 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, dosłowna kopia wzoru 8, kwadrat | 9,6 s |
 | `legal` | `src/speedrun_legal.py` | `szachy_mat_legala.mp4` | 1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6? 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, pionowo | 13,5 s |
+| `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit, pionowo | 19,2 s |
 
 ## Narzędzia do nowych filmów
 
