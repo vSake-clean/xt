@@ -107,7 +107,7 @@ fi
 # 13. Kinowy edit o Magnusie w stylu wzoru 9: Carlsen - Karjakin, dogrywka MS 2016, 50. Qh6+!! 1-0 (19,2 s)
 if want magnus; then
   need wzor9_magnus_a.mp4
-  python3 "$SRC/pobierz_zdjecia.py"          # zdjecia CC BY-SA z Wikimedia Commons do wejscie/zdjecia
+  python3 "$SRC/pobierz_zdjecia.py"          # zdjecia z artykulow Chess.com o meczu 2016 do wejscie/zdjecia
   python3 "$SRC/edit_magnus.py" "$IN/wzor9_magnus_a.mp4" szachy_edit_magnus.mp4
 fi
 

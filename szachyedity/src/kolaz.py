@@ -1,6 +1,6 @@
 # kolaz.py - narzedzia do kinowych editow-kolazy (jak wzory 9 i 10): zdjecie czarno-biale z ziarnem,
 # powolny najazd kamery (Ken Burns), wycinanka postaci z bialym obrysem (OpenCV GrabCut), zegar z cyframi rzymskimi.
-# Zdjecia tylko z wolnymi licencjami (np. Wikimedia Commons, CC BY-SA) i z podpisem autora w opisie filmu.
+# Zdjecia: najlepiej z wolnymi licencjami (Wikimedia Commons, CC BY-SA); inne (np. prasowe) na odpowiedzialnosc autora filmu.
 import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -32,10 +32,13 @@ def sticker(img, rect, outline=14, iters=6):
     x0, y0, x1, y1 = rect
     cv2.grabCut(a, mask, (x0, y0, x1 - x0, y1 - y0), bg, fg, iters, cv2.GC_INIT_WITH_RECT)
     m = np.where((mask == 1) | (mask == 3), 255, 0).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))   # przecina cienkie mostki do logo w tle
     n, lab, st, _ = cv2.connectedComponentsWithStats(m)          # tylko najwieksza czesc (postac)
     if n > 1:
         k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA])); m = np.where(lab == k, 255, 0).astype(np.uint8)
     m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    from scipy import ndimage
+    m = (ndimage.binary_fill_holes(m > 0) * 255).astype(np.uint8)   # bez dziur w twarzy
     m = cv2.GaussianBlur(m, (5, 5), 0)
     body = Image.fromarray(m)
     out = Image.new('RGBA', img.size, (0, 0, 0, 0))
@@ -73,3 +76,15 @@ def clock_face(size, t_spin=0.0, font_file=None):
         d.line((c, c, c + math.cos(ang) * c * ln, c + math.sin(ang) * c * ln), fill=(20, 20, 20, 255), width=w)
     d.ellipse((c - 18, c - 18, c + 18, c + 18), fill=(20, 20, 20, 255))
     return im.resize((size, size), Image.LANCZOS)
+
+def card(img, width, border=18, col=(245, 244, 238, 255), rot=0.0):
+    """Zdjecie jako odbitka z ramka (biala albo zlota) i cieniem; male zdjecia nie musza zajmowac calego ekranu."""
+    h = int(width * img.height / img.width)
+    ph = img.convert('RGBA').resize((width, h), Image.LANCZOS)
+    c = Image.new('RGBA', (width + 2 * border, h + 2 * border), col)
+    c.alpha_composite(ph, (border, border))
+    sh = Image.new('RGBA', (c.width + 60, c.height + 60), (0, 0, 0, 0))
+    sh.paste((0, 0, 0, 170), (30, 38, 30 + c.width, 38 + c.height))
+    sh = sh.filter(ImageFilter.GaussianBlur(14))
+    sh.alpha_composite(c, (30, 30))
+    return sh.rotate(rot, resample=Image.BICUBIC, expand=True)

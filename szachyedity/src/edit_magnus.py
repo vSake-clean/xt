@@ -7,7 +7,7 @@
 import os, sys, math, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import chess
 from assets import S, empty, sprites as SPR, sq_xy, highlight, LIGHT, DARK
 
@@ -177,13 +177,9 @@ def keys(t, ks):                                     # interpolacja klatek klucz
 C = B / 2
 # ---------------- 4. zdjecia (Wikimedia Commons, CC BY-SA; autorzy w ZDJECIA_ZRODLA i w opisie filmu) ----------------
 ZDJ = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'wejscie', 'zdjecia')
-PH = {  # klucz -> plik w wejscie/zdjecia (pobiera pobierz_zdjecia.py)
-    'gra': 'World_Chess_Championship_2016_tie-break_-_4.jpg',
-    'portret': 'Carlsen_Magnus_BW_(30352212740).jpg',
-    'oboje': 'World_Chess_Championship_2016_tie-break_-_6.jpg',
-    'rama': 'World_Chess_Championship_2016_tie-break_-_9.jpg',
-    'puchar': 'World_Chess_Championship_2016_tie-break_-_33.jpg',
-    'kaptur': 'Carlsen_Magnus_with_hood_(30251235731).jpg',
+PH = {  # klucz -> plik w wejscie/zdjecia (pobiera src/pobierz_zdjecia.py; zdjecia z artykulow Chess.com o meczu 2016)
+    'ruch': 'magnus_ruch.jpg', 'portret': 'magnus_portret.jpg', 'oboje': 'oboje.jpg', 'usmiech': 'magnus_usmiech.jpg',
+    'mysli': 'magnus_mysli.jpg', 'reka': 'magnus_reka.jpg', 'wdol': 'magnus_wdol.jpg', 'puchar': 'puchar.jpg',
 }
 import kolaz
 def load_ph(key):
@@ -191,34 +187,37 @@ def load_ph(key):
     if os.path.exists(f): return Image.open(f).convert('RGB')
     im = Image.new('RGB', (1200, 800), (90, 90, 90)); ImageDraw.Draw(im).text((40, 40), 'BRAK ' + PH[key], fill=(255, 255, 255))
     return im                                          # atrapa do prob, gdy zdjecia jeszcze nie ma
-PHOTO = {k: kolaz.bw(load_ph(k), gamma=1.05) for k in PH}
-STICK = None                                           # wycinanka Magnusa (portret), liczona raz
+COLOR = {k: load_ph(k) for k in PH}
+PHOTO = {k: kolaz.bw(v, gamma=1.05) for k, v in COLOR.items()}
+STICK = None                                           # wycinanka Magnusa (usmiech, reka przy brodzie), liczona raz
 def sticker():
     global STICK
     if STICK is None:
-        im = PHOTO['portret']
-        if not os.path.exists(os.path.join(ZDJ, PH['portret'])):      # atrapa: GrabCut na pustym obrazku sie wiesza
+        im = PHOTO['usmiech']
+        if not os.path.exists(os.path.join(ZDJ, PH['usmiech'])):      # atrapa: GrabCut na pustym obrazku sie wiesza
             STICK = Image.new('RGBA', (400, 700), (255, 255, 255, 255)); return STICK
-        STICK = kolaz.sticker(im, STICK_RECT(im))
-        STICK.thumbnail((620, 900), Image.LANCZOS)
+        STICK = kolaz.sticker(im, (int(im.width * .03), int(im.height * .06), int(im.width * .78), im.height - 1))
+        STICK = STICK.resize((560, int(560 * STICK.height / STICK.width)), Image.LANCZOS)
     return STICK
-STICK_RECT = lambda im: (int(im.width * .12), int(im.height * .04), int(im.width * .9), int(im.height * .98))
 CLOCK_FONT = FONT + 'Inter-SemiBold.otf'
 
-# kinds: board (kamera na planszy), stars (plansza wsrod gwiazd), photo (najazd na zdjecie), clock (zegar + plansza-karta
-# + wycinanka), title (portret + MAGNUS CARLSEN), framed (zdjecie w zlotej ramce)
-SHOTS = [  # od, do, rodzaj, parametry
-    (0.00, 1.93, 'photo', ('gra', [(0.0, .5, .5, 1.08, -2), (1.93, .55, .45, 1.32, 0)])),
-    (1.93, 3.80, 'photo', ('portret', [(1.93, .5, .3, 2.4, 0), (3.8, .5, .29, 3.3, 0)])),
+# kinds: board (kamera na planszy), stars (plansza wsrod gwiazd), photo (najazd na zdjecie na caly ekran), clock (zegar +
+# plansza-karta + spadajaca wycinanka), title (zdjecie + MAGNUS CARLSEN), framed (odbitka w zlotej ramce),
+# card (kolorowa odbitka na rozmytym tle)
+SHOTS = [  # od, do, rodzaj, parametry: (zdjecie, klatki kluczowe (t, cx, cy, zoom, obrot))
+    (0.00, 1.93, 'photo', ('ruch', [(0.0, .66, .5, 1.0, -2), (1.93, .64, .45, 1.18, 0)])),
+    (1.93, 3.80, 'photo', ('portret', [(1.93, .5, .5, 1.0, 0), (3.8, .5, .42, 1.3, 0)])),
     (3.80, 5.00, 'stars', [(3.8, C, C, 0.42, -18), (5.0, C, C, 0.62, 4)]),
-    (5.00, 7.20, 'photo', ('oboje', [(5.0, .35, .5, 1.25, 0), (7.2, .65, .5, 1.25, 0)])),
+    (5.00, 6.10, 'photo', ('oboje', [(5.0, .2, .5, 1.0, 0), (6.1, .19, .47, 1.08, 0)])),     # Karjakin
+    (6.10, 7.20, 'photo', ('oboje', [(6.1, .8, .45, 1.08, 0), (7.2, .81, .5, 1.0, 0)])),    # Carlsen
     (7.20, 10.80, 'clock', None),
-    (10.80, 12.00, 'title', ('portret', [(10.8, .5, .42, 1.05, 0), (12.0, .5, .42, 1.15, 0)])),
-    (12.00, 14.40, 'board', [(12.0, 820, 420, 2.0, 0), (14.4, 840, 430, 2.35, 0)]),
-    (14.40, 16.00, 'framed', ('rama', [(14.4, .5, .5, 1.0, 0), (16.0, .5, .5, 1.12, 0)])),
+    (10.80, 12.00, 'title', ('mysli', [(10.8, .56, .5, 1.0, 0), (12.0, .56, .45, 1.1, 0)])),
+    (12.00, 13.10, 'photo', ('reka', [(12.0, .5, .5, 1.02, 0), (13.1, .5, .45, 1.2, 0)])),
+    (13.10, 14.40, 'board', [(13.1, 820, 420, 2.1, 0), (14.4, 840, 430, 2.35, 0)]),
+    (14.40, 16.00, 'framed', ('wdol', [(14.4, 0, 0, 1.0, -2), (16.0, 0, 0, 1.06, 1)])),
     (16.00, 17.10, 'board', [(16.0, 945, 335, 2.6, -4), (17.1, 900, 360, 2.25, 0)]),
     (17.10, 17.95, 'board', [(17.1, C, C, 1.0, 0), (17.95, C, C, 1.03, 0)]),
-    (17.95, 19.20, 'photo', ('puchar', [(17.95, .5, .48, 1.05, 0), (19.2, .5, .45, 1.22, 0)])),
+    (17.95, 19.20, 'card', ('puchar', [(17.95, 0, 0, 1.0, 3), (19.2, 0, 0, 1.08, -1)])),
 ]
 FLASH = [(0.0, 0.3, 1.0), (3.67, 0.15, 0.95), (5.0, 0.22, 1.0), (7.2, 0.22, 1.0), (16.0, 0.4, 1.0), (17.95, 0.2, 0.8)]
 DARK_AT = [(3.80, 0.22)]                              # zaciemnienie jak we wzorze
@@ -236,7 +235,7 @@ CAPS = [  # od, do, tekst (napis na dole, jak we wzorze, tylko wlasny)
     (17.15, 17.95, 'KARJAKIN RESIGNED.'),
     (18.05, 19.20, 'WORLD CHAMPION.'),
 ]
-CREDIT = 'Photos: Vladimir Barskij, Andreas Kontokanis / Wikimedia Commons, CC BY-SA'
+CREDIT = 'Photos: Chess.com'
 CAP_FONT, CRED_FONT = font('Inter-SemiBold.otf', 44), font('Inter-SemiBold.otf', 22)
 
 def caption(im, text, a):
@@ -292,14 +291,15 @@ def frame(fi):
         if kind == 'title':
             base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .35)
             title(base, min(1.0, (t - s0) / .12), 1.06 - .06 * ease((t - s0) / .4))
-    elif kind == 'framed':                            # zdjecie w zlotej ramce na czarnym tle (jak we wzorze)
+    elif kind in ('framed', 'card'):                  # odbitka (zlota ramka / kolor) na rozmytym, ciemnym tle
         key, ks = prm
-        _, _, z, _ = keys(t, ks)
-        ph = PHOTO[key]; w = int(760 * z); h = int(w * ph.height / ph.width)
-        im = ph.resize((w, h), Image.LANCZOS).convert('RGBA')
-        x0, y0 = (W - w) // 2, (H - h) // 2 - 60
-        base.alpha_composite(im, (x0, y0))
-        ImageDraw.Draw(base).rectangle((x0 - 18, y0 - 18, x0 + w + 17, y0 + h + 17), outline=(196, 158, 74, 255), width=8)
+        _, _, z, rot = keys(t, ks)
+        src = PHOTO[key] if kind == 'framed' else COLOR[key]
+        bg = kolaz.cover(PHOTO[key], W, H, .5, .5, 1.1).filter(ImageFilter.GaussianBlur(18))
+        base = Image.blend(bg, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .55)
+        c = kolaz.card(src, int(1010 * z), border=14 if kind == 'framed' else 20,
+                       col=(196, 158, 74, 255) if kind == 'framed' else (245, 244, 238, 255), rot=rot)
+        base.alpha_composite(c, ((W - c.width) // 2, (H - c.height) // 2 - 80))
     elif kind == 'clock':                             # zegar sie kreci, plansza-karta (partia leci), wycinanka spada
         u = (t - s0) / (s1 - s0)
         ck = kolaz.clock_face(1040, t_spin=u * 6, font_file=CLOCK_FONT).rotate(-u * 40, resample=Image.BICUBIC)
@@ -307,9 +307,9 @@ def frame(fi):
         base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .25)
         card = Image.new('RGBA', (B + 40, B + 40), (245, 244, 238, 255)); card.alpha_composite(board_img(t), (20, 20))
         card = card.resize((620, 620), Image.LANCZOS).rotate(12 - 24 * ease(u), resample=Image.BICUBIC, expand=True)
-        base.alpha_composite(card, ((W - card.width) // 2 + 120, 980 - card.height // 2))
+        base.alpha_composite(card, ((W - card.width) // 2 + 190, 900 - card.height // 2))
         st = sticker().rotate(-25 + 55 * u, resample=Image.BICUBIC, expand=True)
-        base.alpha_composite(st, (int(-80 + 160 * u), int(120 + 260 * ease(u))))
+        base.alpha_composite(st, (int(-150 + 150 * u), int(140 + 300 * ease(u))))
     for a0, a1, txt in CAPS:
         if a0 <= t < a1:
             caption(base, txt, min(1.0, (t - a0) / .1, (a1 - t) / .1))
