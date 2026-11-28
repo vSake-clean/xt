@@ -51,7 +51,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `carokann` | `src/speedrun_caro_kann.py` | `szachy_caro_kann_speedrun.mp4` | 1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6?? 6. Nd6#, stoper nad planszą, pionowo | 12,2 s |
 | `fastest` | `src/kopia_fastest.py` | `szachy_fastest_checkmate.mp4` | 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, dosłowna kopia wzoru 8, kwadrat | 9,6 s |
 | `legal` | `src/speedrun_legal.py` | `szachy_mat_legala.mp4` | 1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6? 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, pionowo | 13,5 s |
-| `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit, pionowo | 19,2 s |
+| `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit-kolaż ze zdjęciami z Wikimedia Commons (CC BY-SA), pionowo | 19,2 s |
 
 ## Narzędzia do nowych filmów
 
@@ -59,6 +59,9 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 - `python3 src/dopasuj_klip.py WZOR.mp4 wejscie/alien.mp4 T_PRZED T_PO [x y w h]` ustala, gdzie, od kiedy, jak przezroczyście i w jakim tempie we wzorze leci mem. `T_PRZED` to sekunda bez klipu, `T_PO` sekunda z klipem.
 
 ## Pozostałe pliki
+
+- `src/kolaz.py`: narzędzia do editów-kolaży (czarno-białe zdjęcie, najazd kamery, wycinanka z białym obrysem przez OpenCV, zegar).
+- `src/pobierz_zdjecia.py`: pobiera zdjęcia z Wikimedia Commons do `wejscie/zdjecia/` (nie ma ich w repo). Licencja CC BY-SA: w opisie filmu podaj autorów (Vladimir Barskij, Andreas Kontokanis), licencję i że zdjęcia są przerobione.
 
 - `src/assets.py` wycina planszę i figury ze zrzutu (zmienna `PLANSZA` albo `wejscie/plansza.jpg`) i zamalowuje pasek przewijania widoczny na zrzucie.
 - `mat_zduszony.py` działa samodzielnie, bez `src/`: `python3 mat_zduszony.py PLANSZA.jpg MEM.mp4 MUZYKA.mp4 wynik.mp4`.

@@ -16,6 +16,8 @@ fi
 python3 -m pip install numpy pillow scipy
 # zwykla instalacja python-chess bywa zepsuta (blad przy budowaniu kola) - wtedy gotowe kolo
 python3 -m pip install --only-binary=:all: chess || python3 -m pip install chess
+# OpenCV tylko do wycinanek ze zdjec w editach-kolazach (src/kolaz.py)
+python3 -m pip install --only-binary=:all: opencv-python-headless
 python3 -c "import numpy, PIL, scipy, chess; print('OK: numpy, pillow, scipy, python-chess', chess.__version__)"
 ffmpeg -version | head -1
 echo "Gotowe. Teraz wrzuc filmiki z TikToka do wejscie/ (lista w README.md) i uruchom ./buduj.sh"

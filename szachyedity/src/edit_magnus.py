@@ -175,19 +175,52 @@ def keys(t, ks):                                     # interpolacja klatek klucz
     return ks[-1][1:]
 
 C = B / 2
-SHOTS = [  # od, do, klatki kluczowe kamery, tlo
-    (0.00, 1.93, [(0.0, 470, 640, 2.9, -8), (1.93, 540, 560, 2.3, -3)], 'black'),
-    (1.93, 3.80, [(1.93, 300, 700, 2.2, 6), (3.8, 340, 520, 1.85, 2)], 'black'),
-    (3.80, 5.00, [(3.8, C, C, 0.42, -18), (5.0, C, C, 0.62, 4)], 'stars'),
-    (5.00, 7.20, [(5.0, C, C, 1.02, 0), (7.2, C, C, 1.1, -2)], 'black'),
-    (7.20, 10.80, [(7.2, 700, 380, 1.75, -28), (9.0, 600, 560, 1.45, 10), (10.8, C, C, 1.25, 22)], 'black'),
-    (10.80, 12.00, [(10.8, C, C, 1.0, 0), (12.0, C, C, 0.96, 0)], 'black'),
-    (12.00, 14.40, [(12.0, 820, 420, 2.0, 0), (14.4, 840, 430, 2.35, 0)], 'black'),
-    (14.40, 16.00, [(14.4, C, C, 0.64, 0), (16.0, C, C, 0.7, 0)], 'frame'),
-    (16.00, 17.10, [(16.0, 945, 335, 2.6, -4), (17.1, 900, 360, 2.25, 0)], 'black'),
-    (17.10, 19.20, [(17.1, C, C, 1.0, 0), (19.2, C, C, 1.04, 0)], 'black'),
+# ---------------- 4. zdjecia (Wikimedia Commons, CC BY-SA; autorzy w ZDJECIA_ZRODLA i w opisie filmu) ----------------
+ZDJ = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'wejscie', 'zdjecia')
+PH = {  # klucz -> plik w wejscie/zdjecia (pobiera pobierz_zdjecia.py)
+    'gra': 'World_Chess_Championship_2016_tie-break_-_4.jpg',
+    'portret': 'Carlsen_Magnus_BW_(30352212740).jpg',
+    'oboje': 'World_Chess_Championship_2016_tie-break_-_6.jpg',
+    'rama': 'World_Chess_Championship_2016_tie-break_-_9.jpg',
+    'puchar': 'World_Chess_Championship_2016_tie-break_-_33.jpg',
+    'kaptur': 'Carlsen_Magnus_with_hood_(30251235731).jpg',
+}
+import kolaz
+def load_ph(key):
+    f = os.path.join(ZDJ, PH[key])
+    if os.path.exists(f): return Image.open(f).convert('RGB')
+    im = Image.new('RGB', (1200, 800), (90, 90, 90)); ImageDraw.Draw(im).text((40, 40), 'BRAK ' + PH[key], fill=(255, 255, 255))
+    return im                                          # atrapa do prob, gdy zdjecia jeszcze nie ma
+PHOTO = {k: kolaz.bw(load_ph(k), gamma=1.05) for k in PH}
+STICK = None                                           # wycinanka Magnusa (portret), liczona raz
+def sticker():
+    global STICK
+    if STICK is None:
+        im = PHOTO['portret']
+        if not os.path.exists(os.path.join(ZDJ, PH['portret'])):      # atrapa: GrabCut na pustym obrazku sie wiesza
+            STICK = Image.new('RGBA', (400, 700), (255, 255, 255, 255)); return STICK
+        STICK = kolaz.sticker(im, STICK_RECT(im))
+        STICK.thumbnail((620, 900), Image.LANCZOS)
+    return STICK
+STICK_RECT = lambda im: (int(im.width * .12), int(im.height * .04), int(im.width * .9), int(im.height * .98))
+CLOCK_FONT = FONT + 'Inter-SemiBold.otf'
+
+# kinds: board (kamera na planszy), stars (plansza wsrod gwiazd), photo (najazd na zdjecie), clock (zegar + plansza-karta
+# + wycinanka), title (portret + MAGNUS CARLSEN), framed (zdjecie w zlotej ramce)
+SHOTS = [  # od, do, rodzaj, parametry
+    (0.00, 1.93, 'photo', ('gra', [(0.0, .5, .5, 1.08, -2), (1.93, .55, .45, 1.32, 0)])),
+    (1.93, 3.80, 'photo', ('portret', [(1.93, .5, .3, 2.4, 0), (3.8, .5, .29, 3.3, 0)])),
+    (3.80, 5.00, 'stars', [(3.8, C, C, 0.42, -18), (5.0, C, C, 0.62, 4)]),
+    (5.00, 7.20, 'photo', ('oboje', [(5.0, .35, .5, 1.25, 0), (7.2, .65, .5, 1.25, 0)])),
+    (7.20, 10.80, 'clock', None),
+    (10.80, 12.00, 'title', ('portret', [(10.8, .5, .42, 1.05, 0), (12.0, .5, .42, 1.15, 0)])),
+    (12.00, 14.40, 'board', [(12.0, 820, 420, 2.0, 0), (14.4, 840, 430, 2.35, 0)]),
+    (14.40, 16.00, 'framed', ('rama', [(14.4, .5, .5, 1.0, 0), (16.0, .5, .5, 1.12, 0)])),
+    (16.00, 17.10, 'board', [(16.0, 945, 335, 2.6, -4), (17.1, 900, 360, 2.25, 0)]),
+    (17.10, 17.95, 'board', [(17.1, C, C, 1.0, 0), (17.95, C, C, 1.03, 0)]),
+    (17.95, 19.20, 'photo', ('puchar', [(17.95, .5, .48, 1.05, 0), (19.2, .5, .45, 1.22, 0)])),
 ]
-FLASH = [(0.0, 0.3, 1.0), (3.67, 0.15, 0.95), (5.0, 0.22, 1.0), (7.2, 0.22, 1.0), (16.0, 0.4, 1.0)]   # bialy: start, czas, sila
+FLASH = [(0.0, 0.3, 1.0), (3.67, 0.15, 0.95), (5.0, 0.22, 1.0), (7.2, 0.22, 1.0), (16.0, 0.4, 1.0), (17.95, 0.2, 0.8)]
 DARK_AT = [(3.80, 0.22)]                              # zaciemnienie jak we wzorze
 HITS = [1.9, 4.34, 4.64, 4.83, 10.24, 13.84, 14.12, 14.28, 14.98, 16.0]   # bas: wstrzas kamery
 
@@ -200,10 +233,11 @@ CAPS = [  # od, do, tekst (napis na dole, jak we wzorze, tylko wlasny)
     (12.10, 14.30, 'HE ONLY NEEDED A DRAW.'),
     (14.50, 15.95, 'HIS BIRTHDAY.'),
     (16.25, 17.05, '50. Qh6+!!'),
-    (17.25, 18.10, 'KARJAKIN RESIGNED.'),
-    (18.15, 19.20, 'WORLD CHAMPION.'),
+    (17.15, 17.95, 'KARJAKIN RESIGNED.'),
+    (18.05, 19.20, 'WORLD CHAMPION.'),
 ]
-CAP_FONT = font('Inter-SemiBold.otf', 44)
+CREDIT = 'Photos: Vladimir Barskij, Andreas Kontokanis / Wikimedia Commons, CC BY-SA'
+CAP_FONT, CRED_FONT = font('Inter-SemiBold.otf', 44), font('Inter-SemiBold.otf', 22)
 
 def caption(im, text, a):
     lay = Image.new('RGBA', (W, 140), (0, 0, 0, 0))
@@ -223,7 +257,7 @@ BIG1, BIG2 = font('Inter-ExtraBold.otf', 190), font('Inter-SemiBold.otf', 70)
 def title(im, a, scale):
     lay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
-    for txt, f, y, col in (('MAGNUS', BIG1, 820, (255, 214, 74, 255)), ('C A R L S E N', BIG2, 1030, (255, 255, 255, 255))):
+    for txt, f, y, col in (('MAGNUS', BIG1, 1180, (255, 214, 74, 255)), ('C A R L S E N', BIG2, 1390, (255, 255, 255, 255))):
         bb = d.textbbox((0, 0), txt, font=f)
         d.text((W / 2 - (bb[2] - bb[0]) / 2 - bb[0] + 4, y + 6), txt, font=f, fill=(0, 0, 0, 170))
         d.text((W / 2 - (bb[2] - bb[0]) / 2 - bb[0], y), txt, font=f, fill=col)
@@ -233,41 +267,69 @@ def title(im, a, scale):
     lay.putalpha(lay.getchannel('A').point(lambda v: int(v * a)))
     im.alpha_composite(lay)
 
-def frame(fi):
-    t = fi / FPS
-    shot = next(s for s in SHOTS if s[0] <= t < s[1] or s is SHOTS[-1])
-    cx, cy, z, rot = keys(t, shot[2])
+def shake_cam(t, cx, cy, z, k_px=14):
     for h in HITS:                                    # wstrzas na basie
         u = t - h
         if 0 <= u < .3:
             k = (1 - u / .3) ** 2
-            cx += 14 * k * math.sin(u * 90); cy += 10 * k * math.cos(u * 70); z *= 1 + .05 * k
-    bimg = board_img(t, arrows=ease((t - 17.4) / .3) if t >= 17.4 else 0.0)
-    if shot[3] == 'frame':                            # plansza jak portret w zlotej ramce (wzor: zdjecie w ramce)
-        fr = Image.new('RGBA', (B + 60, B + 60), (0, 0, 0, 0))
-        dd = ImageDraw.Draw(fr)
-        dd.rectangle((0, 0, B + 59, B + 59), outline=(196, 158, 74, 255), width=9)
-        fr.alpha_composite(bimg, (30, 30))
-        bimg = fr; cx += 30; cy += 30
-    cam = camera(bimg, cx, cy, z, rot)
-    base = Image.fromarray(STARS if shot[3] == 'stars' else np.zeros((H, W, 3), np.uint8)).convert('RGBA')
-    base.alpha_composite(cam)
-    if 10.8 <= t < 12.0:                              # "MAGNUS": plansza przygaszona, duzy napis
-        base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .62)
-        title(base, min(1.0, (t - 10.8) / .12), 1.06 - .06 * ease((t - 10.8) / .4))
+            cx += k_px * k * math.sin(u * 90); cy += k_px * .7 * k * math.cos(u * 70); z *= 1 + .05 * k
+    return cx, cy, z
+
+def frame(fi):
+    t = fi / FPS
+    s0, s1, kind, prm = next(s for s in SHOTS if s[0] <= t < s[1] or s is SHOTS[-1])
+    base = Image.new('RGBA', (W, H), (0, 0, 0, 255))
+    if kind in ('board', 'stars'):
+        cx, cy, z, rot = keys(t, prm)
+        cx, cy, z = shake_cam(t, cx, cy, z)
+        if kind == 'stars': base = Image.fromarray(STARS).convert('RGBA')
+        base.alpha_composite(camera(board_img(t, arrows=ease((t - 17.4) / .3) if t >= 17.4 else 0.0), cx, cy, z, rot))
+    elif kind in ('photo', 'title'):
+        key, ks = prm
+        cx, cy, z, rot = keys(t, ks)
+        _, _, z = shake_cam(t, 0, 0, z)
+        base = kolaz.cover(PHOTO[key], W, H, cx, cy, z, rot)
+        if kind == 'title':
+            base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .35)
+            title(base, min(1.0, (t - s0) / .12), 1.06 - .06 * ease((t - s0) / .4))
+    elif kind == 'framed':                            # zdjecie w zlotej ramce na czarnym tle (jak we wzorze)
+        key, ks = prm
+        _, _, z, _ = keys(t, ks)
+        ph = PHOTO[key]; w = int(760 * z); h = int(w * ph.height / ph.width)
+        im = ph.resize((w, h), Image.LANCZOS).convert('RGBA')
+        x0, y0 = (W - w) // 2, (H - h) // 2 - 60
+        base.alpha_composite(im, (x0, y0))
+        ImageDraw.Draw(base).rectangle((x0 - 18, y0 - 18, x0 + w + 17, y0 + h + 17), outline=(196, 158, 74, 255), width=8)
+    elif kind == 'clock':                             # zegar sie kreci, plansza-karta (partia leci), wycinanka spada
+        u = (t - s0) / (s1 - s0)
+        ck = kolaz.clock_face(1040, t_spin=u * 6, font_file=CLOCK_FONT).rotate(-u * 40, resample=Image.BICUBIC)
+        base.alpha_composite(ck, ((W - ck.width) // 2, (H - ck.height) // 2 - 120))
+        base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .25)
+        card = Image.new('RGBA', (B + 40, B + 40), (245, 244, 238, 255)); card.alpha_composite(board_img(t), (20, 20))
+        card = card.resize((620, 620), Image.LANCZOS).rotate(12 - 24 * ease(u), resample=Image.BICUBIC, expand=True)
+        base.alpha_composite(card, ((W - card.width) // 2 + 120, 980 - card.height // 2))
+        st = sticker().rotate(-25 + 55 * u, resample=Image.BICUBIC, expand=True)
+        base.alpha_composite(st, (int(-80 + 160 * u), int(120 + 260 * ease(u))))
     for a0, a1, txt in CAPS:
         if a0 <= t < a1:
             caption(base, txt, min(1.0, (t - a0) / .1, (a1 - t) / .1))
+    if t >= 18.3:                                     # podpis autorow zdjec (CC BY-SA)
+        d = ImageDraw.Draw(base); bb = d.textbbox((0, 0), CREDIT, font=CRED_FONT)
+        d.text(((W - bb[2]) / 2, 1800), CREDIT, font=CRED_FONT, fill=(220, 220, 220, 255))
     fr = np.array(base.convert('RGB')).astype(float)
     fr = fr * VIGN + GRAIN[fi % len(GRAIN)]
-    for s0, d, k in FLASH:
-        if s0 <= t < s0 + d: fr = fr + (255 - fr) * k * (1 - (t - s0) / d) ** 2
-    for s0, d in DARK_AT:
-        if s0 <= t < s0 + d: fr = fr * ((t - s0) / d)
+    for f0, d, k in FLASH:
+        if f0 <= t < f0 + d: fr = fr + (255 - fr) * k * (1 - (t - f0) / d) ** 2
+    for f0, d in DARK_AT:
+        if f0 <= t < f0 + d: fr = fr * ((t - f0) / d)
     if t > DUR - .35: fr = fr * max(0.0, (DUR - t) / .35)
     return np.clip(fr, 0, 255).astype(np.uint8)
 
-# ---------------- 4. render, audio ze wzoru (do 19,2 s, wyciszenie na koncu) ----------------
+# ---------------- 5. render, audio ze wzoru (do 19,2 s, wyciszenie na koncu) ----------------
+if os.environ.get('PODGLAD'):                          # PODGLAD="1.0,8.5" -> tylko klatki PNG do sprawdzenia
+    for ts in os.environ['PODGLAD'].split(','):
+        Image.fromarray(frame(int(round(float(ts) * FPS)))).save(f'{OUT}_{ts}.png')
+    sys.exit(0)
 enc = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',
                         '-r', str(FPS), '-i', '-', '-i', WZOR, '-map', '0:v', '-map', '1:a',
                         '-af', f'afade=t=out:st={DUR - 0.5:.2f}:d=0.5', '-c:v', 'libx264', '-preset', 'slow', '-crf', '18',

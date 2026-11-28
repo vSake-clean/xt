@@ -2,3 +2,4 @@ numpy
 pillow
 scipy
 chess
+opencv-python-headless

@@ -4,6 +4,8 @@ build/
 !wejscie/*.jpg
 # filmiki pobrane z TikToka (cudza muzyka i klipy) nie trafiaja do publicznego repo
 wejscie/*.mp4
+# zdjecia do editow (CC BY-SA, pobiera src/pobierz_zdjecia.py)
+wejscie/zdjecia/
 # wyjatek: te dwa sa w repo (mat zduszony buduje sie bez niczego od uzytkownika)
 !wejscie/alien.mp4
 !wejscie/wzor1.mp4
