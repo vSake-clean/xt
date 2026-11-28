@@ -24,6 +24,10 @@ ZDJECIA = {  # plik -> adres (artykul: chess.com/article/view/carlsen-karjakin-w
     'fischer_uscisk.jpg': U + 'images_users/tiny_mce/AnthonyLevin/php7UN4FE.jpeg',
     'fischer_autografy.jpg': U + 'images_users/tiny_mce/AnthonyLevin/phpm01TNB.jpeg',
     'fischer_spasski.jpg': 'https://en.chessbase.com/Portals/All/2017/_eng/ff/reykjavik51-fischer-spassky.jpg',
+    'fischer_mlody.jpg': U + 'images_users/tiny_mce/NiiLoC/phpbfANTA.jpeg',
+    'fischer_idzie.jpg': 'https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/NiiLoC/phpp9p7ZI.jpeg',
+    'geller_spasski.jpg': 'https://en.chessbase.com/Portals/All/2017/_eng/ff/reykjavik50-geller-spassky.jpg',
+    'fischer_reykjavik_kolor.jpg': 'https://i.ytimg.com/vi/d2WlFD2rbRk/hqdefault.jpg',   # miniatura filmu o partii 6
 }
 
 if __name__ == '__main__':

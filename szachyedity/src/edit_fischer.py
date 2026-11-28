@@ -200,11 +200,16 @@ ZDJ = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(os.path
 PH = {  # klucz -> plik w wejscie/zdjecia (pobiera src/pobierz_zdjecia.py)
     'rece': 'fischer_rece.jpg', 'usa': 'fischer_tal_usa.jpg', 'spasski': 'fischer_spasski.jpg',
     'autografy': 'fischer_autografy.jpg', 'uscisk': 'fischer_uscisk.jpg', 'usmiech': 'fischer_usmiech.jpg',
+    'mlody': 'fischer_mlody.jpg', 'reykjavik': 'fischer_reykjavik_kolor.jpg', 'geller': 'geller_spasski.jpg',
+    'idzie': 'fischer_idzie.jpg',
 }
 import kolaz
 def load_ph(key):
     f = os.path.join(ZDJ, PH[key])
-    if os.path.exists(f): return Image.open(f).convert('RGB')
+    if os.path.exists(f):
+        im = Image.open(f).convert('RGB')
+        rows = np.nonzero(np.asarray(im.convert('L')).mean(1) > 14)[0]      # obcina czarne pasy (kadr z filmu)
+        return im.crop((0, int(rows[0]), im.width, int(rows[-1]) + 1)) if len(rows) else im
     im = Image.new('RGB', (1200, 800), (90, 90, 90)); ImageDraw.Draw(im).text((40, 40), 'BRAK ' + PH[key], fill=(255, 255, 255))
     return im
 COLOR = {k: load_ph(k) for k in PH}
@@ -233,17 +238,18 @@ CLOCK_FONT = FONT + 'Inter-SemiBold.otf'
 # kinds: board (kamera na planszy), stars (plansza wsrod gwiazd), photo (najazd na zdjecie na caly ekran), clock (zegar +
 # plansza-karta + spadajaca wycinanka), title (zdjecie + MAGNUS CARLSEN), framed (odbitka w zlotej ramce),
 # card (kolorowa odbitka na rozmytym tle)
-SHOTS = [  # od, do, rodzaj, parametry
-    (0.00, 2.40, 'strings', [(0.0, C, 600, 1.55, -4), (2.4, C, 560, 1.3, 2)]),
+PLANSZA_W_EDYCIE = False                               # uzytkownik: edity nie musza miec szachownicy
+SHOTS = [  # od, do, rodzaj, parametry (bez planszy: same zdjecia, sznurki, gwiazdy, zegar)
+    (0.00, 2.40, 'photostr', ('mlody', [(0.0, .77, .5, 1.0, 0), (2.4, .76, .45, 1.1, 0)], [(.86, .3), (.71, .56), (.93, .52)])),
     (2.40, 4.97, 'cardstr', ('rece', [(2.4, 0, 0, 1.0, -3), (4.97, 0, 0, 1.08, 2)])),
     (5.00, 6.83, 'photo', ('usa', [(5.0, .33, .36, 1.05, 0), (6.83, .42, .68, 1.15, 0)])),
-    (6.83, 8.03, 'stars', [(6.83, C, C, 0.42, -18), (8.03, C, C, 0.6, 6)]),
+    (6.83, 8.03, 'starcard', ('geller', [(6.83, 0, 0, .7, -16), (8.03, 0, 0, .85, 8)])),
     (8.03, 9.60, 'card', ('spasski', [(8.03, 0, 0, 1.0, 2), (9.6, 0, 0, 1.07, -1)])),
     (9.60, 11.20, 'photo', ('autografy', [(9.6, .4, .45, 1.0, 0), (11.2, .38, .38, 1.15, 0)])),
-    (11.20, 12.00, 'board', [(11.2, 700, 380, 1.9, 0), (12.0, 720, 400, 2.1, 0)]),
+    (11.20, 12.00, 'photo', ('idzie', [(11.2, .55, .5, 1.0, 0), (12.0, .55, .42, 1.1, 0)])),
     (12.00, 14.53, 'clock', None),
-    (14.53, 15.10, 'board', [(14.53, 675, 340, 2.7, -4), (15.1, 690, 360, 2.4, 0)]),
-    (15.10, 17.83, 'board', [(15.1, 760, 420, 1.6, 0), (17.83, C, C, 1.02, 0)]),
+    (14.53, 15.10, 'photo', ('autografy', [(14.53, .43, .27, 2.0, -3), (15.1, .43, .28, 1.8, 0)])),
+    (15.10, 17.83, 'card', ('reykjavik', [(15.1, 0, 0, 1.0, -2), (17.83, 0, 0, 1.12, 1)])),
     (17.83, 19.40, 'photo', ('uscisk', [(17.83, .24, .3, 1.12, 0), (18.7, .47, .5, 1.0, 0), (19.4, .5, .52, .98, 0)])),
 ]
 FLASH = [(0.0, 0.3, 1.0), (14.53, 0.45, 1.0), (17.83, 0.18, 0.7)]   # bialy blysk wzoru w 14,53 s
@@ -318,6 +324,23 @@ def frame(fi):
         c = kolaz.card(src, int(1010 * z), border=14 if kind == 'framed' else 20,
                        col=(196, 158, 74, 255) if kind == 'framed' else (245, 244, 238, 255), rot=rot)
         base.alpha_composite(c, ((W - c.width) // 2, (H - c.height) // 2 - 80))
+    elif kind == 'photostr':                          # zdjecie na caly ekran + sznurki od gory do wskazanych punktow
+        key, ks, pts = prm
+        cx, cy, z, rot = keys(t, ks)
+        _, _, z = shake_cam(t, 0, 0, z)
+        ph = PHOTO[key]; base = kolaz.cover(ph, W, H, cx, cy, z)
+        sc = max(W / ph.width, H / ph.height) * z
+        d = ImageDraw.Draw(base)
+        for i, (fx, fy) in enumerate(pts):
+            X, Y = W / 2 + (fx - cx) * ph.width * sc, H / 2 + (fy - cy) * ph.height * sc
+            d.line((X + 40 * math.sin(t * 1.6 + i * 1.4), 0, X, Y), fill=(245, 245, 240, 235), width=5)
+            d.ellipse((X - 8, Y - 8, X + 8, Y + 8), fill=(245, 245, 240, 255))
+    elif kind == 'starcard':                          # odbitka obracajaca sie wsrod gwiazd (zamiast Ziemi ze wzoru)
+        key, ks = prm
+        _, _, z, rot = keys(t, ks)
+        base = Image.fromarray(STARS).convert('RGBA')
+        c = kolaz.card(PHOTO[key], int(900 * z), border=16, rot=rot)
+        base.alpha_composite(c, ((W - c.width) // 2, (H - c.height) // 2))
     elif kind == 'cardstr':                           # zdjecie-odbitka zawieszona na sznurkach (lalkarz ze wzoru)
         key, ks = prm
         _, _, z, rot = keys(t, ks)
@@ -341,11 +364,12 @@ def frame(fi):
         ck = kolaz.clock_face(1040, t_spin=u * 6, font_file=CLOCK_FONT).rotate(-u * 40, resample=Image.BICUBIC)
         base.alpha_composite(ck, ((W - ck.width) // 2, (H - ck.height) // 2 - 120))
         base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .25)
-        card = Image.new('RGBA', (B + 40, B + 40), (245, 244, 238, 255)); card.alpha_composite(board_img(t), (20, 20))
-        card = card.resize((620, 620), Image.LANCZOS).rotate(12 - 24 * ease(u), resample=Image.BICUBIC, expand=True)
-        base.alpha_composite(card, ((W - card.width) // 2 + 190, 900 - card.height // 2))
+        if PLANSZA_W_EDYCIE:
+            card = Image.new('RGBA', (B + 40, B + 40), (245, 244, 238, 255)); card.alpha_composite(board_img(t), (20, 20))
+            card = card.resize((620, 620), Image.LANCZOS).rotate(12 - 24 * ease(u), resample=Image.BICUBIC, expand=True)
+            base.alpha_composite(card, ((W - card.width) // 2 + 190, 900 - card.height // 2))
         st = sticker().rotate(-25 + 55 * u, resample=Image.BICUBIC, expand=True)
-        base.alpha_composite(st, (int(-150 + 150 * u), int(140 + 300 * ease(u))))
+        base.alpha_composite(st, (int((W - st.width) / 2 - 200 + 330 * u), int(120 + 520 * ease(u))))
     for a0, a1, txt in (CAPS if NAPISY else []):
         if a0 <= t < a1:
             caption(base, txt, min(1.0, (t - a0) / .1, (a1 - t) / .1))

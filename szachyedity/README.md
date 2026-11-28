@@ -52,7 +52,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `fastest` | `src/kopia_fastest.py` | `szachy_fastest_checkmate.mp4` | 1. e4 f5 2. Qh5+ g6 3. Be2 gxh5 4. Bxh5#, dosłowna kopia wzoru 8, kwadrat | 9,6 s |
 | `legal` | `src/speedrun_legal.py` | `szachy_mat_legala.mp4` | 1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6? 5. Nxe5!! Bxd1?? 6. Bxf7+ Ke7 7. Nd5#, stoper, pionowo | 13,5 s |
 | `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit-kolaż ze zdjęciami z meczu (Chess.com), pionowo | 19,2 s |
-| `fischer` | `src/edit_fischer.py` | `szachy_edit_fischer.mp4` | Fischer – Spasski, Reykjavik 1972, partia 6: 38. Rxf6!! … 41. Qf4 1-0, kinowy edit-kolaż (figury i zdjęcie na sznurkach, USA kontra ZSRR), pionowo | 19,4 s |
+| `fischer` | `src/edit_fischer.py` | `szachy_edit_fischer.mp4` | Fischer – Spasski, Reykjavik 1972, partia 6: 38. Rxf6!! … 41. Qf4 1-0, kinowy edit-kolaż bez planszy (zdjęcia na sznurkach, USA kontra ZSRR, zegar, gwiazdy), pionowo | 19,4 s |
 
 ## Narzędzia do nowych filmów
 
