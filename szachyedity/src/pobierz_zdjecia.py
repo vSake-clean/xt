@@ -1,7 +1,7 @@
 # pobierz_zdjecia.py - pobiera zdjecia do editow-kolazy (src/edit_magnus.py, src/edit_fischer.py) do wejscie/zdjecia/.
-# Zrodla: artykuly Chess.com i ChessBase (mecz o MS 2016 Carlsen - Karjakin; Fischer, Reykjavik 1972). To zdjecia prasowe z prawami autorskimi
-# Chess.com (nie wolna licencja): nie trafiaja do repo, w filmie jest podpis "Photos: Chess.com", a za publikacje
-# odpowiada autor filmu. Uzycie: python3 src/pobierz_zdjecia.py
+# Zrodla: artykuly Chess.com i ChessBase (mecz o MS 2016 Carlsen - Karjakin; Fischer, Reykjavik 1972). To zdjecia prasowe
+# z prawami autorskimi (nie wolna licencja): nie trafiaja do repo, w filmach nie ma napisow (zrodlo mozna podac w opisie
+# na TikToku), a za publikacje odpowiada autor filmu. Uzycie: python3 src/pobierz_zdjecia.py
 import os, subprocess, time
 
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'wejscie', 'zdjecia')
