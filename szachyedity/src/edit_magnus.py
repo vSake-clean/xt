@@ -223,6 +223,7 @@ FLASH = [(0.0, 0.3, 1.0), (3.67, 0.15, 0.95), (5.0, 0.22, 1.0), (7.2, 0.22, 1.0)
 DARK_AT = [(3.80, 0.22)]                              # zaciemnienie jak we wzorze
 HITS = [1.9, 4.34, 4.64, 4.83, 10.24, 13.84, 14.12, 14.28, 14.98, 16.0]   # bas: wstrzas kamery
 
+NAPISY = False                                         # uzytkownik: nigdy nie dodawaj napisow (nikt ich nie czyta)
 CAPS = [  # od, do, tekst (napis na dole, jak we wzorze, tylko wlasny)
     (0.25, 1.85, 'NEW YORK. 30.11.2016'),
     (2.00, 3.60, 'WORLD CHAMPIONSHIP'),
@@ -290,7 +291,7 @@ def frame(fi):
         base = kolaz.cover(PHOTO[key], W, H, cx, cy, z, rot)
         if kind == 'title':
             base = Image.blend(base, Image.new('RGBA', (W, H), (0, 0, 0, 255)), .35)
-            title(base, min(1.0, (t - s0) / .12), 1.06 - .06 * ease((t - s0) / .4))
+            if NAPISY: title(base, min(1.0, (t - s0) / .12), 1.06 - .06 * ease((t - s0) / .4))
     elif kind in ('framed', 'card'):                  # odbitka (zlota ramka / kolor) na rozmytym, ciemnym tle
         key, ks = prm
         _, _, z, rot = keys(t, ks)
@@ -310,10 +311,10 @@ def frame(fi):
         base.alpha_composite(card, ((W - card.width) // 2 + 190, 900 - card.height // 2))
         st = sticker().rotate(-25 + 55 * u, resample=Image.BICUBIC, expand=True)
         base.alpha_composite(st, (int(-150 + 150 * u), int(140 + 300 * ease(u))))
-    for a0, a1, txt in CAPS:
+    for a0, a1, txt in (CAPS if NAPISY else []):
         if a0 <= t < a1:
             caption(base, txt, min(1.0, (t - a0) / .1, (a1 - t) / .1))
-    if t >= 18.3:                                     # podpis autorow zdjec (CC BY-SA)
+    if NAPISY and t >= 18.3:                          # podpis zrodla zdjec (wylaczony razem z napisami)
         d = ImageDraw.Draw(base); bb = d.textbbox((0, 0), CREDIT, font=CRED_FONT)
         d.text(((W - bb[2]) / 2, 1800), CREDIT, font=CRED_FONT, fill=(220, 220, 220, 255))
     fr = np.array(base.convert('RGB')).astype(float)
