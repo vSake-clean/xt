@@ -1,174 +1,341 @@
 # tweenslop.py  -  uzycie:
 #   python3 src/tweenslop.py ZDJECIE.jpg wynik.mp4 [x0 y0 x1 y1]   (prostokat postaci w ulamkach zdjecia)
-# Edit w stylu "tweenslop": jedno zdjecie (wycieta postac z bialym obrysem) najpierw spokojnie sie kolysze,
-# a od dropu brazylijskiego funku przesadnie "tweenuje" na kazdy bit (zgniatanie/rozciaganie, obroty, skoki,
-# odbicia, smugi). Muzyke (beat funk 130 BPM) generujemy sami kodem - bez cudzych utworow. Bez napisow.
+# Edit "tweenslop" jak we wzorach z wejscie/tweenslop/ (t1-t6): spokojny wstep, drop brazylijskiego phonku/funku,
+# potem co takt inne tlo (wzgorza, kalejdoskop z promieniami, korytarz z szachownica, plamy oleju, szybkie ciecia),
+# wycinanki z bialym obrysem, ktore lataja, kreca sie, rozciagaja; kolorowe nakladki na bit, smugi, piksele, wielkie oczy.
+# Muzyka i wszystkie tla generowane w tym skrypcie (wlasny utwor, bez cudzych nagran i grafik). Bez napisow.
 import os, sys, math, subprocess, wave
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageFilter
+from scipy import signal, ndimage
 import kolaz
+from assets import sprites as SPR
 
 SRC, OUT = sys.argv[1:3]
 RECT = [float(v) for v in sys.argv[3:7]] if len(sys.argv) >= 7 else [.03, .06, .78, 1.0]
-W, H, FPS = 1080, 1920, 30
-BPM = 130.0
-BEAT = 60 / BPM
-DROP = 3.0                                   # do dropu "moj tweening" (spokojnie), potem tweenslop
-NBEATS = 20
-DUR = DROP + NBEATS * BEAT + 0.35
+EYES = [(.55, .375), (.745, .373)]           # oczy na wycince Magnusa (ulamki), do efektu "wielkie oczy"
+W, H, FPS, SR = 1080, 1920, 30, 44100
+BPM = 130.0; B = 60 / BPM; S16 = B / 4
+DROP = 6 * B                                 # 2,77 s spokojnego wstepu
+SEC = [DROP + 4 * B * k for k in range(6)]   # poczatki taktow po dropie: wzgorza, kalejdoskop, korytarz, olej, ciecia
+END_HITS = SEC[5]                            # 12,0 s: koncowka
+DUR = END_HITS + 3 * B + .0
 NF = int(round(DUR * FPS))
-SR = 44100
+rng = np.random.default_rng(11)
 
-# ---------------- 1. muzyka: intro (pozytywka) + funk (tamborzao) ----------------
+# =============================== 1. MUZYKA ===============================
 def env(n, a, d):
     t = np.arange(n) / SR
     return np.minimum(1, t / max(a, 1e-4)) * np.exp(-t / d)
 
-def kick(n=int(.4 * SR)):
+def sine_sweep(f0, f1, n, tau):
     t = np.arange(n) / SR
-    f = 45 + 110 * np.exp(-t / .03)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, .001, .16) * 1.1
+    f = f1 + (f0 - f1) * np.exp(-t / tau)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR)
 
-def bass808(freq, n=int(.42 * SR)):
-    t = np.arange(n) / SR
-    f = freq * (1 + .5 * np.exp(-t / .02))
-    return np.tanh(2.2 * np.sin(2 * np.pi * np.cumsum(f) / SR)) * env(n, .003, .22) * .55
+def kick():
+    n = int(.35 * SR)
+    return np.tanh(3 * sine_sweep(190, 48, n, .025) * env(n, .001, .14)) * .9
 
-def clap(n=int(.2 * SR), rng=np.random.default_rng(1)):
-    x = rng.normal(0, 1, n)
-    x = x - np.concatenate([[0], x[:-1]]) * .9            # gora pasma
-    e = np.zeros(n)
-    for o in (0, .011, .022):
-        k = int(o * SR); e[k:] += env(n - k, .0005, .012 if o < .02 else .07)
-    return x * e * .35
+def bass808(f, dur, glide=None):
+    n = int(dur * SR); t = np.arange(n) / SR
+    ff = np.full(n, f) if glide is None else f * (glide / f) ** np.clip(t / dur * 1.6 - .4, 0, 1)
+    x = np.sin(2 * np.pi * np.cumsum(ff) / SR)
+    return np.tanh(2.6 * x) * env(n, .004, dur * .7) * .5
 
-def hat(n=int(.05 * SR), rng=np.random.default_rng(2)):
-    x = rng.normal(0, 1, n); x = x - np.concatenate([[0], x[:-1]])
-    return x * env(n, .0005, .012) * .12
+def noise(n): return rng.normal(0, 1, n)
+SOS_HP = signal.butter(2, 3000, 'hp', fs=SR, output='sos')
+SOS_CL = signal.butter(2, [900, 3500], 'bp', fs=SR, output='sos')
+def clap():
+    n = int(.22 * SR); x = signal.sosfilt(SOS_CL, noise(n)); e = np.zeros(n)
+    for o in (0, .009, .018):
+        k = int(o * SR); e[k:] += env(n - k, .0004, .01 if o < .018 else .08)
+    return x * e * .9
+def hat(open_=False):
+    n = int((.18 if open_ else .05) * SR)
+    return signal.sosfilt(SOS_HP, noise(n)) * env(n, .0004, .06 if open_ else .012) * .35
+def tom(f=230):
+    n = int(.18 * SR)
+    return sine_sweep(f * 1.6, f, n, .02) * env(n, .001, .06) * .45
+def cowbell(f):
+    n = int(.3 * SR); t = np.arange(n) / SR
+    x = np.sign(np.sin(2 * np.pi * f * t)) + np.sign(np.sin(2 * np.pi * f * 1.48 * t))
+    return signal.sosfilt(signal.butter(2, [f * .8, f * 3], 'bp', fs=SR, output='sos'), x) * env(n, .001, .1) * .35
+def lead(f, dur, bend=-3.0):                 # "falujacy" lead automotivo: 3 pily, wibrato, zjazd na koncu
+    n = int(dur * SR); t = np.arange(n) / SR
+    semi = .45 * np.sin(2 * np.pi * 6.5 * t) + bend * np.clip((t / dur - .6) / .4, 0, 1) ** 2
+    out = 0
+    for det in (-.12, 0, .13):
+        ph = np.cumsum(f * 2 ** ((semi + det) / 12)) / SR
+        out = out + (2 * (ph % 1) - 1)
+    out = signal.sosfilt(signal.butter(2, 2600, 'lp', fs=SR, output='sos'), out)
+    return np.tanh(1.8 * out / 3) * env(n, .005, dur * .55) * .32
+FORM = {'a': (800, 1150), 'o': (450, 800), 'e': (400, 2000), 'i': (300, 2300), 'u': (325, 700)}
+def vox(vowel, f, dur):                      # "wokal" z syntezy formantowej (sieczka jak w montagem)
+    n = int(dur * SR); t = np.arange(n) / SR
+    ph = np.cumsum(f * 2 ** (.25 * np.sin(2 * np.pi * 5 * t) / 12)) / SR
+    src = 2 * (ph % 1) - 1
+    out = 0
+    for fc, g in zip(FORM[vowel], (1.0, .6)):
+        out = out + g * signal.sosfilt(signal.butter(2, [fc * .85, fc * 1.15], 'bp', fs=SR, output='sos'), src)
+    return np.tanh(2.2 * out) * env(n, .008, dur * .45) * .5
+def riser(dur):
+    n = int(dur * SR); t = np.arange(n) / SR; x = noise(n); out = np.zeros(n); blk = 1024
+    for i in range(0, n, blk):
+        fc = 300 * (6000 / 300) ** (i / n)
+        out[i:i + blk] = signal.sosfilt(signal.butter(2, [fc * .7, min(fc * 1.4, SR / 2 - 100)], 'bp', fs=SR, output='sos'), x[i:i + blk])
+    return out * (t / dur) ** 2 * .5
+def crash():
+    n = int(1.2 * SR)
+    return signal.sosfilt(signal.butter(2, 5000, 'hp', fs=SR, output='sos'), noise(n)) * env(n, .001, .35) * .35
 
-def cowbell(freq, n=int(.28 * SR)):
-    t = np.arange(n) / SR
-    sq = np.sign(np.sin(2 * np.pi * freq * t)) + np.sign(np.sin(2 * np.pi * freq * 1.48 * t))
-    return sq * env(n, .001, .09) * .11
-
-def musicbox(freq, n=int(.9 * SR)):
-    t = np.arange(n) / SR
-    return (np.sin(2 * np.pi * freq * t) + .3 * np.sin(4 * np.pi * freq * t)) * env(n, .003, .35) * .22
-
-N = int(DUR * SR) + SR
-mix = np.zeros(N)
+N = int((DUR + 1) * SR); mix = np.zeros(N)
 def put(x, t, g=1.0):
-    i = int(t * SR); j = min(N, i + len(x)); mix[i:j] += x[:j - i] * g
+    i = int(t * SR)
+    if i >= N: return
+    j = min(N, i + len(x)); mix[i:j] += x[:j - i] * g
 
-notes = [659.3, 784.0, 880.0, 784.0, 659.3, 587.3, 523.3, 587.3]            # spokojne intro
-for k in range(int(DROP / (BEAT / 2))):
-    put(musicbox(notes[k % len(notes)]), k * BEAT / 2, .9 if k % 2 == 0 else .6)
-S16 = BEAT / 4
-KICK = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]                      # tamborzao 3-3-4-3-3
-CLAP = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-BASS = [55.0, 55.0, 65.4, 49.0]                                               # A, A, C, G
-BELL = [880, 0, 0, 1175, 0, 0, 988, 0, 880, 0, 0, 1175, 0, 1319, 0, 0]
-for b in range(NBEATS // 4):                                                  # takty po 4 bity
-    t0 = DROP + b * 4 * BEAT
+F1, Ab1, Bb1, C2, Db2, Eb2 = 43.65, 51.91, 58.27, 65.41, 69.30, 77.78
+MEL = [349.2, 415.3, 523.3, 466.2, 415.3, 349.2, 311.1, 349.2]                 # f-moll
+# wstep: siekane samogloski, przytlumione, + riser
+for k in range(12):
+    v = 'aoaeaoiu'[k % 8]
+    put(vox(v, MEL[k % 8] / 2, B / 2 * .9), k * B / 2, .55 if k % 2 else .8)
+put(riser(4 * B), DROP - 4 * B, .9)
+KICK = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]                        # tamborzao
+TOM = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]
+LEAD = [0, 3, 6, 10, 13]
+VOXS = [2, 7, 11, 14]
+BASS = [(F1, None), (F1, Ab1), (Db2 / 2 * 2, None), (Eb2 / 2 * 2, C2)]
+BELL = [698.5, 0, 0, 830.6, 0, 0, 784.0, 0, 698.5, 0, 0, 830.6, 0, 932.3, 0, 0]
+for bar in range(5):
+    t0 = SEC[bar]
+    stop = bar == 2                                                           # przerwa przed drugim dropem
+    put(crash(), t0, .9 if bar in (0, 3) else .4)
     for s in range(16):
         ts = t0 + s * S16
-        if KICK[s]: put(kick(), ts); put(bass808(BASS[b % 4]), ts)
-        if CLAP[s]: put(clap(), ts)
-        if s % 2 == 0: put(hat(), ts, 1.4 if s % 4 == 2 else .8)
-        if BELL[s]: put(cowbell(BELL[s]), ts)
-put(clap(), DROP - S16, .8); put(clap(), DROP - 2 * S16, .5)                   # podbicie przed dropem
-mix = np.tanh(mix * 1.4) / np.tanh(1.4)
-mix[int((DUR - .3) * SR):] *= np.linspace(1, 0, len(mix) - int((DUR - .3) * SR))
+        if stop and s >= 12:
+            continue
+        if KICK[s]:
+            put(kick(), ts); bn, gl = BASS[bar % 4]
+            put(bass808(bn, S16 * 3.2, gl), ts)
+        if TOM[s]: put(tom(230 if s < 8 else 260), ts)
+        if s in (4, 12): put(clap(), ts)
+        put(hat(open_=(s % 8 == 6)), ts, 1.0 if s % 4 == 2 else .55)
+        if s in LEAD: put(lead(MEL[(s + bar * 3) % 8], S16 * 2.4, -4 if s == 13 else -1.5), ts)
+        if s in VOXS: put(vox('aoea'[VOXS.index(s)], MEL[(s + bar) % 8], S16 * 1.6), ts, .8)
+        if bar >= 3 and BELL[s]: put(cowbell(BELL[s]), ts)
+    if stop:
+        put(vox('o', 415.3, B * .9), t0 + 12 * S16, .9); put(riser(B), t0 + 12 * S16, .7)
+for k, ts in enumerate([END_HITS, END_HITS + B, END_HITS + 1.5 * B]):        # koncowe uderzenia
+    put(kick(), ts); put(bass808(F1, B * 1.5), ts); put(crash(), ts, .5); put(vox('a', MEL[k], B * .8), ts, .7)
+mix = np.tanh(mix * 1.5)
+mix = mix / (np.abs(mix).max() + 1e-9) * .89
+mix[int((DUR - .25) * SR):int(DUR * SR)] *= np.linspace(1, 0, int(DUR * SR) - int((DUR - .25) * SR))
 WAV = OUT + '.wav'
 with wave.open(WAV, 'wb') as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
-    w.writeframes((np.clip(mix[:int(DUR * SR)], -1, 1) * 27500).astype(np.int16).tobytes())
+    w.writeframes((mix[:int(DUR * SR)] * 32767).astype(np.int16).tobytes())
 
-# ---------------- 2. postac: wycinanka w kolorze z bialym obrysem ----------------
+# =============================== 2. POSTACIE ===============================
 im = Image.open(SRC).convert('RGB')
 x0, y0, x1, y1 = RECT
 FIG = kolaz.sticker(im, (int(im.width * x0), int(im.height * y0), int(im.width * x1), int(im.height * y1) - 1), outline=12)
 FIG = FIG.resize((900, int(900 * FIG.height / FIG.width)), Image.LANCZOS)
-if FIG.height > 1300: FIG = FIG.resize((int(FIG.width * 1300 / FIG.height), 1300), Image.LANCZOS)
 
-# ---------------- 3. animacja: pozy na kazdy bit ----------------
-def back(u, s=2.2):                                   # ease-out z przestrzeleniem (sprezyna)
+def piece_sticker(p, size=420, outline=10):           # figura szachowa jako naklejka z bialym obrysem
+    rgb, a = SPR[p]
+    pim = Image.fromarray(np.dstack([rgb, a * 255]).clip(0, 255).astype(np.uint8), 'RGBA').resize((size, size), Image.LANCZOS)
+    al = np.asarray(pim.getchannel('A')) > 40
+    ring = ndimage.binary_dilation(al, iterations=outline)
+    out = Image.new('RGBA', pim.size, (0, 0, 0, 0))
+    out.paste((255, 255, 255, 255), (0, 0), Image.fromarray((ring * 255).astype(np.uint8)))
+    out.alpha_composite(pim)
+    return out
+PIECES = [piece_sticker(p) for p in ('wN', 'bQ', 'wK', 'bN', 'wQ', 'bK')]
+
+def bulge(fig, k):                                    # "wielkie oczy": lokalne powiekszenie wokol oczu
+    if k <= 0: return fig
+    a = np.asarray(fig).astype(float); out = a.copy()
+    R = int(fig.width * .085)
+    for fx, fy in EYES:
+        cx, cy = fx * fig.width, fy * fig.height
+        xs, ys = int(cx - R), int(cy - R)
+        yy, xx = np.mgrid[ys:ys + 2 * R, xs:xs + 2 * R].astype(float)
+        dx, dy = xx - cx, yy - cy; r = np.hypot(dx, dy) / R
+        f = np.where(r < 1, np.clip(r, 1e-3, 1) ** k, 1.0)          # probkuje blizej srodka -> powiekszenie
+        sx, sy = cx + dx * f, cy + dy * f
+        for c in range(4):
+            out[ys:ys + 2 * R, xs:xs + 2 * R, c] = ndimage.map_coordinates(a[:, :, c], [sy, sx], order=1)
+    return Image.fromarray(out.clip(0, 255).astype(np.uint8), 'RGBA')
+
+def place(base, fig, x, y, sx=1.0, sy=1.0, rot=0.0, alpha=1.0, flip=False):
+    f = fig.transpose(Image.FLIP_LEFT_RIGHT) if flip else fig
+    f = f.resize((max(2, int(f.width * sx)), max(2, int(f.height * sy))), Image.BICUBIC)
+    if rot: f = f.rotate(rot, resample=Image.BICUBIC, expand=True)
+    if alpha < 1: f.putalpha(f.getchannel('A').point(lambda v: int(v * alpha)))
+    base.alpha_composite(f, (int(x - f.width / 2), int(y - f.height / 2)))
+
+# =============================== 3. TLA (wlasne, z kodu) ===============================
+hw, hh = W // 2, H // 2
+YY, XX = np.mgrid[0:hh, 0:hw].astype(float)
+def up(a): return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).resize((W, H), Image.BICUBIC).convert('RGBA')
+
+def make_hills():
+    sky = np.zeros((hh, hw, 3)); g = YY / hh
+    sky[:] = (np.array([40, 110, 220.]) * (1 - g[..., None]) + np.array([170, 215, 255.]) * g[..., None])
+    for _ in range(9):                                # chmury
+        cx, cy, r = rng.uniform(0, hw), rng.uniform(0, hh * .45), rng.uniform(25, 70)
+        m = np.exp(-(((XX - cx) / (r * 2.2)) ** 2 + ((YY - cy) / r) ** 2))
+        sky = sky * (1 - m[..., None] * .8) + 255 * m[..., None] * .8
+    for base_y, amp, col0, col1, ph in ((.62, 40, (70, 160, 40), (40, 120, 25), .3), (.74, 55, (90, 190, 50), (50, 140, 30), 2.1)):
+        top = hh * base_y + amp * np.sin(XX[0] / hw * 3.1 + ph) + amp * .4 * np.sin(XX[0] / hw * 7 + ph * 2)
+        m = YY > top[None, :]
+        gg = np.clip((YY - top[None, :]) / (hh * .35), 0, 1)[..., None]
+        sky = np.where(m[..., None], np.array(col0) * (1 - gg) + np.array(col1) * gg, sky)
+    return up(sky)
+HILLS = make_hills()
+
+def rays(t, c1, c2):
+    ang = np.arctan2(YY - hh * .5, XX - hw * .5)
+    st = (np.sin(ang * 14 + t * 2.5) > 0)[..., None]
+    r = np.hypot(XX - hw * .5, YY - hh * .5)[..., None] / (hh * .7)
+    a = np.where(st, np.array(c1, float), np.array(c2, float)) * (1 - .35 * r) + 255 * np.clip(1 - r * 2.2, 0, 1) * .6
+    return up(a)
+
+def hallway(t):                                       # korytarz z szachownica w perspektywie (jak korytarze ze wzorow)
+    hz = hh * .40
+    img = np.zeros((hh, hw, 3))
+    wall = np.array([236, 233, 226.]) - 30 * (np.abs(XX - hw / 2) / hw)[..., None]
+    img[:] = wall
+    floor = YY > hz
+    z = 260.0 / np.maximum(YY - hz, 1)
+    xw = (XX - hw / 2) * z / 90
+    zw = z * 6 + t * 7
+    chk = ((np.floor(xw) + np.floor(zw)) % 2 == 0)[..., None]
+    fc = np.where(chk, np.array([238, 238, 210.]), np.array([118, 150, 85.]))
+    fog = np.clip((YY - hz) / (hh - hz), 0, 1)[..., None] ** .5
+    fc = fc * fog + wall * (1 - fog)
+    img = np.where(floor[..., None], fc, img)
+    for side in (-1, 1):                              # ciemniejsze sciany boczne
+        edge = np.abs(XX - hw / 2) > (hw * .18 + (YY - hz) * .9 * (YY > hz))
+        img = np.where((edge & (YY < hz + (np.abs(XX - hw / 2) - hw * .18) / .9))[..., None], img * .85, img)
+    return up(img)
+
+def oil(t):                                           # psychodeliczne plamy oleju (warping szumu)
+    x, y = XX[::2, ::2] / 60, YY[::2, ::2] / 60
+    for k in range(3):
+        x, y = x + .8 * np.sin(y * 1.3 + t * .9 + k), y + .8 * np.sin(x * 1.1 - t * .7 + k * 2)
+    v = np.sin(x * .9 + np.sin(y * .7)) + np.sin(y * 1.1 + t * .5)
+    h = (v * .18 + t * .08) % 1
+    rgb = np.stack([.5 + .5 * np.cos(2 * np.pi * (h + o)) for o in (0, .33, .67)], -1)
+    rgb = .55 + .45 * rgb
+    return Image.fromarray((rgb * 255).astype(np.uint8)).resize((W, H), Image.BICUBIC).convert('RGBA')
+
+def mosaic(seed, white=0.0):
+    r = np.random.default_rng(seed)
+    blk = r.uniform(.55, 1, (H // 60 + 1, W // 60 + 1, 3)) * 255
+    blk = blk * (1 - white) + 255 * white
+    return Image.fromarray(blk.astype(np.uint8)).resize((blk.shape[1] * 60, blk.shape[0] * 60), Image.NEAREST).crop((0, 0, W, H)).convert('RGBA')
+
+TINTS = [(255, 230, 40), (60, 255, 120), (80, 170, 255), (190, 90, 255), (255, 80, 90)]
+def tint(img, col, a=.42):
+    arr = np.asarray(img.convert('RGB')).astype(float)
+    g = arr.mean(2, keepdims=True)
+    t_ = g * np.array(col) / 255 * 1.25
+    return Image.fromarray(np.clip(arr * (1 - a) + t_ * a, 0, 255).astype(np.uint8)).convert('RGBA')
+
+# =============================== 4. ANIMACJA ===============================
+def back(u, s=2.0):
     u = min(max(u, 0.0), 1.0) - 1
     return 1 + (s + 1) * u ** 3 + s * u ** 2
-def elastic(u):
-    u = min(max(u, 0.0), 1.0)
-    return 1 - math.exp(-6 * u) * math.cos(14 * u)
-
-# poza = (sx, sy, rot, dx, dy, flip); ruchy w cyklu na kolejne bity
-POSES = [(1.35, .7, 0, 0, 120, 1), (.75, 1.35, -18, -60, -260, 1), (1.0, 1.0, 360, 0, -40, 1), (1.4, .75, 22, 160, 60, -1),
-         (.8, 1.3, -30, -170, -200, -1), (1.6, 1.6, 8, 0, -100, 1), (1.0, 1.0, -360, 0, 0, 1), (1.25, .8, 0, 0, 140, 1),
-         (.7, 1.45, 15, 120, -300, 1), (1.1, 1.1, 720, 0, -60, -1), (1.5, .65, -12, -140, 160, 1), (1.0, 1.0, 0, 0, -20, 1)]
-REST = (1.0, 1.0, 0, 0, 0, 1)
-
-def pose(t):
-    if t < DROP:                                      # "moj tweening": lagodne kolysanie
-        u = t / BEAT
-        return (1 + .025 * math.sin(u * math.pi), 1 - .02 * math.sin(u * math.pi), 4 * math.sin(u * math.pi / 2),
-                0, -18 * abs(math.sin(u * math.pi / 2)), 1)
-    k = int((t - DROP) // BEAT); u = (t - DROP - k * BEAT) / BEAT
-    a = POSES[(k - 1) % len(POSES)] if k > 0 else REST
-    b = POSES[k % len(POSES)]
-    e = back(u / .45) if abs(b[2] - a[2]) < 200 else elastic(u / .6)
-    p = [a[i] + (b[i] - a[i]) * e for i in range(5)]
-    if u > .55:                                       # w drugiej polowie bitu wraca do srodka (sprezyna)
-        r = back((u - .55) / .45, 1.6)
-        p = [p[i] + (REST[i] - p[i]) * r * (.85 if i < 2 else .7) for i in range(5)]
-        p[2] = p[2] % 360 if abs(p[2]) > 300 else p[2]
-    flip = b[5] if u < .55 else 1
-    wob = 1 + .06 * math.sin(u * 2 * math.pi * 2) * (1 - u)   # drganie miedzy uderzeniami
-    return (p[0] * wob, p[1] / wob, p[2], p[3], p[4], flip)
-
-def draw_fig(base, ps, alpha=1.0):
-    sx, sy, rot, dx, dy, flip = ps
-    f = FIG.transpose(Image.FLIP_LEFT_RIGHT) if flip < 0 else FIG
-    f = f.resize((max(2, int(f.width * sx)), max(2, int(f.height * sy))), Image.BICUBIC)
-    f = f.rotate(rot, resample=Image.BICUBIC, expand=True)
-    if alpha < 1: f.putalpha(f.getchannel('A').point(lambda v: int(v * alpha)))
-    base.alpha_composite(f, (int(W / 2 + dx - f.width / 2), int(H * .56 + dy - f.height / 2)))
-
-BG = [(255, 214, 0), (0, 200, 255), (255, 70, 160), (120, 255, 90), (160, 90, 255)]
-yy, xx = np.mgrid[0:H, 0:W]
-RAD = np.clip(1 - np.hypot((xx - W / 2) / W, (yy - H * .55) / H) * 1.5, 0, 1)[..., None]
-
-def background(t):
-    if t < DROP:                                      # spokojne, pastelowe
-        c0, c1 = np.array([236, 230, 255.]), np.array([196, 214, 250.])
-        return Image.fromarray((c1 + (c0 - c1) * RAD).astype(np.uint8)).convert('RGBA')
-    k = int((t - DROP) // BEAT); bar = k // 4
-    c = np.array(BG[bar % len(BG)], float)
-    u = (t - DROP - k * BEAT) / BEAT
-    pulse = max(0.0, 1 - u / .25)                     # rozblysk na uderzeniu
-    img = c * (.55 + .45 * RAD) + (255 - c) * .5 * pulse
-    return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8)).convert('RGBA')
+def beat_info(t):
+    k = int(math.floor((t - DROP) / B)); u = (t - DROP - k * B) / B
+    return k, u
+def squash(u):                                        # zgniecenie na uderzeniu, potem sprezyna
+    e = math.exp(-u * 7) * math.cos(u * 18)
+    return 1 + .32 * e, 1 - .26 * e
 
 def frame(fi):
     t = fi / FPS
-    base = background(t)
-    if t >= DROP:                                     # smugi: poprzednie pozy jako duchy (slop)
-        for lag, a in ((.07, .22), (.035, .38)):
-            draw_fig(base, pose(t - lag), a)
-    draw_fig(base, pose(t))
-    if t >= DROP:                                     # zoom kamery na uderzenie
-        u = ((t - DROP) % BEAT) / BEAT
-        z = 1 + .07 * max(0.0, 1 - u / .2)
-        if z > 1.001:
-            bw_, bh_ = int(W * z), int(H * z)
-            base = base.resize((bw_, bh_), Image.BILINEAR).crop(((bw_ - W) // 2, (bh_ - H) // 2, (bw_ - W) // 2 + W, (bh_ - H) // 2 + H))
-    fr = np.array(base.convert('RGB'))
-    if DROP <= t < DROP + .12:                        # bialy blysk na dropie
-        fr = (fr + (255 - fr.astype(float)) * (1 - (t - DROP) / .12)).astype(np.uint8)
-    return fr
+    if t < DROP:                                      # "moj tweening": maly Magnus na bialym, spokojnie
+        base = Image.new('RGBA', (W, H), (250, 250, 250, 255))
+        u = t / B
+        z = .42 + .05 * t / DROP
+        sx, sy = 1 + .03 * math.sin(u * math.pi), 1 - .03 * math.sin(u * math.pi)
+        place(base, FIG, W / 2, H * .55 - 20 * abs(math.sin(u * math.pi / 2)), z * sx, z * sy, 5 * math.sin(u * math.pi / 2))
+        if t > DROP - B:                              # zapowiedz: nabiera powietrza
+            v = (t - (DROP - B)) / B
+            base = base.resize((int(W * (1 + .15 * v)), int(H * (1 + .15 * v))), Image.BICUBIC)
+            base = base.crop(((base.width - W) // 2, (base.height - H) // 2, (base.width - W) // 2 + W, (base.height - H) // 2 + H))
+        return np.array(base.convert('RGB'))
+    k, u = beat_info(t)
+    sec = min(int((t - DROP) // (4 * B)), 5)
+    ssx, ssy = squash(u)
+    if sec == 0:                                      # wzgorza: Magnus leci po okregu + latajace kopie
+        base = HILLS.copy()
+        for j in range(4):
+            p = ((t - DROP) * .45 + j * .27) % 1.2 - .1
+            place(base, FIG, W * (1.1 - p * 1.2), H * (.85 - p * .7) + 60 * math.sin(t * 3 + j), .22, .22, (t * 240 + j * 90) % 360, .95)
+        a = (t - DROP) / (4 * B) * 2 * math.pi
+        for lag, al in ((.12, .25), (.06, .45), (0, 1.0)):
+            aa = a - lag * 3
+            place(base, FIG, W / 2 + 260 * math.cos(aa), H * .5 + 380 * math.sin(aa), .55 * ssx, .55 * ssy, math.degrees(aa) * .6, al)
+    elif sec == 1:                                    # kalejdoskop: 4 kopie na promieniach, kolor co bit
+        col = TINTS[k % len(TINTS)]
+        base = rays(t, col, tuple(int(c * .55) for c in col))
+        grot = 45 * k + 45 * back(u / .4)
+        for j in range(4):
+            ang = math.radians(grot + 90 * j)
+            place(base, FIG, W / 2 + 300 * math.cos(ang), H / 2 + 300 * math.sin(ang), .4 * ssx, .4 * ssy, -(grot + 90 * j) + 90)
+        place(base, FIG, W / 2, H / 2, .32 * ssy, .32 * ssx, 20 * math.sin(t * 6))
+    elif sec == 2:                                    # korytarz z szachownica: figury skacza, Magnus podskakuje
+        base = hallway(t)
+        for j, pc in enumerate(PIECES[:4]):
+            ph = (u + j * .25) % 1
+            jump = abs(math.sin(ph * math.pi))
+            place(base, pc, W * (.2 + .2 * j), H * .78 - 420 * jump, .7, .7 * (1 + .25 * (1 - jump)), 25 * math.sin(t * 5 + j), flip=(k + j) % 2 == 1)
+        hop = abs(math.sin(u * math.pi))
+        place(base, FIG, W / 2, H * .62 - 260 * hop, .62 * ssx, .62 * ssy, 12 * math.sin(t * 8), flip=k % 2 == 1)
+    elif sec == 3:                                    # plamy oleju + wielkie oczy, glitch pikseli
+        base = oil(t)
+        big = bulge(FIG, .7 + .5 * math.exp(-u * 5))
+        shake = 18 * math.exp(-u * 6)
+        place(base, big, W / 2 + shake * math.sin(t * 90), H * .52 + shake * math.cos(t * 70), 1.0 * ssx, 1.0 * ssy, 6 * math.sin(t * 9))
+        for j, pc in enumerate(PIECES[4:]):
+            place(base, pc, W * (.18 + .64 * j), H * (.2 + .05 * math.sin(t * 4 + j)), .55, .55, (t * 200 * (1 if j else -1)) % 360)
+    elif sec == 4:                                    # szybkie ciecia: co bit inne tlo i poza
+        kind = k % 4
+        base = [HILLS.copy(), rays(t, (255, 120, 200), (120, 40, 160)), hallway(t), oil(t)][kind]
+        poses = [(1.3, .7, 0, 0, 120), (.75, 1.35, -20, -80, -200), (1, 1, 360 * back(u / .5), 0, 0), (1.4, .75, 25, 120, 60)]
+        sx, sy, rot, dx, dy = poses[kind]
+        e = back(u / .35)
+        sx, sy = 1 + (sx - 1) * e * (1 - u), 1 + (sy - 1) * e * (1 - u)
+        for lag, al in ((.08, .3), (0, 1.0)):
+            place(base, FIG, W / 2 + dx * (1 - u + lag), H * .55 + dy * (1 - u + lag), .7 * sx, .7 * sy, rot * (1 if lag == 0 else .7), al, flip=k % 2 == 1)
+        base = tint(base, TINTS[(k + 2) % len(TINTS)], .35)
+    else:                                             # koniec: rozpad na piksele do bialego, Magnus odlatuje krecac sie
+        v = (t - END_HITS) / (DUR - END_HITS)
+        base = mosaic(k, white=min(1.0, v * 1.3))
+        place(base, FIG, W / 2, H * .55, .7 * (1 - v * .8), .7 * (1 - v * .8), 720 * v ** 1.5, 1 - v ** 3)
+    # zoom kamery na uderzenie + bialy blysk na poczatku kazdego taktu
+    z = 1 + .08 * math.exp(-u * 9)
+    if z > 1.002:
+        bw_, bh_ = int(W * z), int(H * z)
+        base = base.resize((bw_, bh_), Image.BILINEAR).crop(((bw_ - W) // 2, (bh_ - H) // 2, (bw_ - W) // 2 + W, (bh_ - H) // 2 + H))
+    fr = np.asarray(base.convert('RGB')).astype(float)
+    if sec in (1, 3) and k % 2 == 1 and .45 < u < .58:   # glitch: pikselizacja na pol-bicie
+        small = Image.fromarray(fr.astype(np.uint8)).resize((W // 28, H // 28), Image.NEAREST)
+        fr = np.asarray(small.resize((W, H), Image.NEAREST)).astype(float)
+    tb = (t - DROP) % (4 * B)
+    if tb < .14: fr = fr + (255 - fr) * (1 - tb / .14)
+    return np.clip(fr, 0, 255).astype(np.uint8)
 
 if os.environ.get('PODGLAD'):
     for ts in os.environ['PODGLAD'].split(','):
         Image.fromarray(frame(int(round(float(ts) * FPS)))).save(f'{OUT}_{ts}.png')
-    sys.exit(0)
+    os.remove(WAV); sys.exit(0)
 
 enc = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',
                         '-r', str(FPS), '-i', '-', '-i', WAV, '-map', '0:v', '-map', '1:a', '-c:v', 'libx264',
@@ -178,4 +345,4 @@ for fi in range(NF):
     enc.stdin.write(frame(fi).tobytes())
 enc.stdin.close(); enc.wait()
 os.remove(WAV)
-print('gotowe:', OUT, f'| drop {DROP} s, {NBEATS} bitow po {BEAT:.3f} s, {NF / FPS:.2f} s')
+print('gotowe:', OUT, f'| {BPM:.0f} BPM, drop {DROP:.2f} s, {NF / FPS:.2f} s')

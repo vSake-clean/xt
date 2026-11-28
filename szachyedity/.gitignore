@@ -6,6 +6,8 @@ build/
 wejscie/*.mp4
 # zdjecia do editow (prasowe, z prawami autorskimi; pobiera src/pobierz_zdjecia.py)
 wejscie/zdjecia/
+# wzory tweenslop z TikToka
+wejscie/tweenslop/
 # wyjatek: te dwa sa w repo (mat zduszony buduje sie bez niczego od uzytkownika)
 !wejscie/alien.mp4
 !wejscie/wzor1.mp4
