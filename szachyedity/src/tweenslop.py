@@ -1,5 +1,5 @@
 # tweenslop.py  -  uzycie:
-#   python3 src/tweenslop.py ZDJECIE.jpg wynik.mp4 [x0 y0 x1 y1]   (prostokat postaci w ulamkach zdjecia)
+#   python3 src/tweenslop.py POSTAC wynik.mp4        POSTAC: magnus | fischer (zdjecia z wejscie/zdjecia, src/pobierz_zdjecia.py)
 # Edit "tweenslop" jak we wzorach z wejscie/tweenslop/ (t1-t6): spokojny wstep, drop brazylijskiego phonku/funku,
 # potem co takt inne tlo (wzgorza, kalejdoskop z promieniami, korytarz z szachownica, plamy oleju, szybkie ciecia),
 # wycinanki z bialym obrysem, ktore lataja, kreca sie, rozciagaja; kolorowe nakladki na bit, smugi, piksele, wielkie oczy.
@@ -12,11 +12,20 @@ from scipy import signal, ndimage
 import kolaz
 from assets import sprites as SPR
 
-SRC, OUT = sys.argv[1:3]
-RECT = [float(v) for v in sys.argv[3:7]] if len(sys.argv) >= 7 else [.03, .06, .78, 1.0]
-EYES = [(.55, .375), (.745, .373)]           # oczy na wycince Magnusa (ulamki), do efektu "wielkie oczy"
+POSTAC, OUT = sys.argv[1:3]
+ZDJ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'wejscie', 'zdjecia')
+POSTACIE = {   # zdjecie, sposob wyciecia, oczy na ZDJECIU (ulamki), tempo i tonacja wlasnego utworu, tlo pierwszego taktu
+    'magnus': dict(plik='magnus_usmiech.jpg', rect=(.03, .06, .78, 1.0), oczy=[(.517, .375), (.671, .373)],
+                   bpm=130.0, rdzen=43.65, mel=[349.2, 415.3, 523.3, 466.2, 415.3, 349.2, 311.1, 349.2], tlo0='wzgorza'),
+    'fischer': dict(plik='fischer_usmiech.jpg', oczy=[(.318, .312), (.386, .305)],
+                    fg=[('e', .35, .33, .055, .10), ('r', .14, .66, .42, .99), ('r', .30, .45, .40, .6), ('r', .06, .68, .2, .99)],
+                    bg=[('r', .56, 0, 1, 1), ('r', 0, 0, 1, .10), ('p', [(0, .10), (.25, .10), (.25, .46), (.12, .53), (0, .57)]),
+                        ('r', .47, .13, .56, .55)],
+                    bpm=140.0, rdzen=36.71, mel=[293.7, 349.2, 440.0, 392.0, 349.2, 293.7, 261.6, 293.7], tlo0='flaga'),
+}
+P = POSTACIE[POSTAC]
 W, H, FPS, SR = 1080, 1920, 30, 44100
-BPM = 130.0; B = 60 / BPM; S16 = B / 4
+BPM = P['bpm']; B = 60 / BPM; S16 = B / 4
 DROP = 6 * B                                 # 2,77 s spokojnego wstepu
 SEC = [DROP + 4 * B * k for k in range(6)]   # poczatki taktow po dropie: wzgorza, kalejdoskop, korytarz, olej, ciecia
 END_HITS = SEC[5]                            # 12,0 s: koncowka
@@ -96,8 +105,9 @@ def put(x, t, g=1.0):
     if i >= N: return
     j = min(N, i + len(x)); mix[i:j] += x[:j - i] * g
 
-F1, Ab1, Bb1, C2, Db2, Eb2 = 43.65, 51.91, 58.27, 65.41, 69.30, 77.78
-MEL = [349.2, 415.3, 523.3, 466.2, 415.3, 349.2, 311.1, 349.2]                 # f-moll
+R = P['rdzen']                                                                # tonika basu (F1 albo D1)
+F1, Ab1, C2, Db2, Eb2 = R, R * 2 ** (3 / 12), R * 2 ** (7 / 12), R * 2 ** (8 / 12), R * 2 ** (10 / 12)
+MEL = P['mel']                                                                # mol (f albo d)
 # wstep: siekane samogloski, przytlumione, + riser
 for k in range(12):
     v = 'aoaeaoiu'[k % 8]
@@ -107,8 +117,8 @@ KICK = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]                        #
 TOM = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]
 LEAD = [0, 3, 6, 10, 13]
 VOXS = [2, 7, 11, 14]
-BASS = [(F1, None), (F1, Ab1), (Db2 / 2 * 2, None), (Eb2 / 2 * 2, C2)]
-BELL = [698.5, 0, 0, 830.6, 0, 0, 784.0, 0, 698.5, 0, 0, 830.6, 0, 932.3, 0, 0]
+BASS = [(F1, None), (F1, Ab1), (Db2, None), (Eb2, C2)]
+BELL = [m * 2 if m else 0 for m in (MEL[0], 0, 0, MEL[1], 0, 0, MEL[3], 0, MEL[0], 0, 0, MEL[1], 0, MEL[2], 0, 0)]
 for bar in range(5):
     t0 = SEC[bar]
     stop = bar == 2                                                           # przerwa przed drugim dropem
@@ -139,10 +149,16 @@ with wave.open(WAV, 'wb') as w:
     w.writeframes((mix[:int(DUR * SR)] * 32767).astype(np.int16).tobytes())
 
 # =============================== 2. POSTACIE ===============================
-im = Image.open(SRC).convert('RGB')
-x0, y0, x1, y1 = RECT
-FIG = kolaz.sticker(im, (int(im.width * x0), int(im.height * y0), int(im.width * x1), int(im.height * y1) - 1), outline=12)
+im = Image.open(os.path.join(ZDJ, P['plik'])).convert('RGB')
+if 'fg' in P:
+    FIG = kolaz.sticker_hints(im, P['fg'], P['bg'], outline=12)
+else:
+    x0, y0, x1, y1 = P['rect']
+    FIG = kolaz.sticker(im, (int(im.width * x0), int(im.height * y0), int(im.width * x1), int(im.height * y1) - 1), outline=12)
+bx0, by0 = FIG.info.get('bbox', (0, 0, 0, 0))[:2]
+EYES = [((ex * im.width - bx0) / FIG.width, (ey * im.height - by0) / FIG.height) for ex, ey in P['oczy']]
 FIG = FIG.resize((900, int(900 * FIG.height / FIG.width)), Image.LANCZOS)
+if FIG.height > 1500: FIG = FIG.resize((int(FIG.width * 1500 / FIG.height), 1500), Image.LANCZOS)
 
 def piece_sticker(p, size=420, outline=10):           # figura szachowa jako naklejka z bialym obrysem
     rgb, a = SPR[p]
@@ -196,6 +212,30 @@ def make_hills():
         sky = np.where(m[..., None], np.array(col0) * (1 - gg) + np.array(col1) * gg, sky)
     return up(sky)
 HILLS = make_hills()
+
+def make_flag():                                      # wlasna, rysowana flaga USA (13 pasow, kanton z gwiazdkami)
+    from PIL import ImageDraw
+    fw, fh = 1300, 2000
+    f = Image.new('RGB', (fw, fh), (255, 255, 255)); d = ImageDraw.Draw(f)
+    sh = fh / 13
+    for i in range(0, 13, 2): d.rectangle((0, i * sh, fw, (i + 1) * sh), fill=(191, 13, 48))
+    cw, ch = fw * .6, sh * 7
+    d.rectangle((0, 0, cw, ch), fill=(10, 49, 97))
+    for r in range(9):
+        for c in range(6 if r % 2 == 0 else 5):
+            x = cw / 12 * (2 * c + 1 + (r % 2)); y = ch / 10 * (r + 1); R_ = sh * .28
+            pts = [(x + R_ * (1 if k % 2 == 0 else .4) * math.cos(-math.pi / 2 + k * math.pi / 5),
+                    y + R_ * (1 if k % 2 == 0 else .4) * math.sin(-math.pi / 2 + k * math.pi / 5)) for k in range(10)]
+            d.polygon(pts, fill=(255, 255, 255))
+    return np.asarray(f.resize((hw + 80, hh + 80))).astype(float)
+FLAG = make_flag()
+def flag(t):                                          # falowanie: przesuniecie kolumn + cieniowanie fal
+    xs = np.arange(hw)
+    off = (22 * np.sin(xs / 55 - t * 5) + 10 * np.sin(xs / 23 - t * 7)).astype(int) + 40
+    rows = np.clip(np.arange(hh)[:, None] + off[None, :], 0, hh + 79)
+    img = FLAG[rows, xs[None, :] + 40]
+    shade = 1 + .18 * np.cos(xs / 55 - t * 5)[None, :, None]
+    return up(img * shade)
 
 def rays(t, c1, c2):
     ang = np.arctan2(YY - hh * .5, XX - hw * .5)
@@ -273,8 +313,8 @@ def frame(fi):
     k, u = beat_info(t)
     sec = min(int((t - DROP) // (4 * B)), 5)
     ssx, ssy = squash(u)
-    if sec == 0:                                      # wzgorza: Magnus leci po okregu + latajace kopie
-        base = HILLS.copy()
+    if sec == 0:                                      # wzgorza / flaga: postac leci po okregu + latajace kopie
+        base = flag(t) if P['tlo0'] == 'flaga' else HILLS.copy()
         for j in range(4):
             p = ((t - DROP) * .45 + j * .27) % 1.2 - .1
             place(base, FIG, W * (1.1 - p * 1.2), H * (.85 - p * .7) + 60 * math.sin(t * 3 + j), .22, .22, (t * 240 + j * 90) % 360, .95)
@@ -307,7 +347,7 @@ def frame(fi):
             place(base, pc, W * (.18 + .64 * j), H * (.2 + .05 * math.sin(t * 4 + j)), .55, .55, (t * 200 * (1 if j else -1)) % 360)
     elif sec == 4:                                    # szybkie ciecia: co bit inne tlo i poza
         kind = k % 4
-        base = [HILLS.copy(), rays(t, (255, 120, 200), (120, 40, 160)), hallway(t), oil(t)][kind]
+        base = [flag(t) if P['tlo0'] == 'flaga' else HILLS.copy(), rays(t, (255, 120, 200), (120, 40, 160)), hallway(t), oil(t)][kind]
         poses = [(1.3, .7, 0, 0, 120), (.75, 1.35, -20, -80, -200), (1, 1, 360 * back(u / .5), 0, 0), (1.4, .75, 25, 120, 60)]
         sx, sy, rot, dx, dy = poses[kind]
         e = back(u / .35)

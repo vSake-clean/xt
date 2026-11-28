@@ -50,7 +50,8 @@ def sticker(img, rect, outline=14, iters=6):
     out.paste((255, 255, 255, 255), (0, 0), ring)
     rgba = img.convert('RGBA'); rgba.putalpha(body)
     out.alpha_composite(rgba)
-    return out.crop(out.getbbox())
+    bb = out.getbbox(); res = out.crop(bb); res.info['bbox'] = bb
+    return res
 
 def clock_face(size, t_spin=0.0, font_file=None):
     """Zegar z cyframi rzymskimi (bialo-czarny jak we wzorze); wskazowki krecia sie w czasie t_spin [obroty]."""
@@ -88,3 +89,55 @@ def card(img, width, border=18, col=(245, 244, 238, 255), rot=0.0):
     sh = sh.filter(ImageFilter.GaussianBlur(14))
     sh.alpha_composite(c, (30, 30))
     return sh.rotate(rot, resample=Image.BICUBIC, expand=True)
+
+def sticker_hints(img, fg, bg, outline=14, iters=8):
+    """Wycinanka GrabCut z podpowiedziami (gdy sama ramka nie wystarcza, np. zdjecia czarno-biale).
+    fg / bg: listy ksztaltow w ulamkach zdjecia: ('e', cx, cy, rx, ry) elipsa, ('r', x0, y0, x1, y1) prostokat
+    albo ('p', [(x, y), ...]) wielokat.
+    fg = na pewno postac, bg = na pewno tlo; reszta = 'raczej tlo'."""
+    import cv2
+    from scipy import ndimage
+    a = np.asarray(img.convert('RGB'))[:, :, ::-1].copy()
+    h, w = a.shape[:2]
+    mask = np.full((h, w), cv2.GC_PR_BGD, np.uint8)
+    def draw(shapes, val):
+        m = Image.new('L', (w, h), 0); d = ImageDraw.Draw(m)
+        for s in shapes:
+            if s[0] == 'e':
+                _, cx, cy, rx, ry = s; d.ellipse(((cx - rx) * w, (cy - ry) * h, (cx + rx) * w, (cy + ry) * h), fill=255)
+            elif s[0] == 'p':                                   # wielokat: ('p', [(x, y), ...])
+                d.polygon([(x * w, y * h) for x, y in s[1]], fill=255)
+            else:
+                _, x0, y0, x1, y1 = s; d.rectangle((x0 * w, y0 * h, x1 * w, y1 * h), fill=255)
+        mask[np.asarray(m) > 0] = val
+    draw(bg, cv2.GC_BGD); draw(fg, cv2.GC_FGD)
+    bgm, fgm = np.zeros((1, 65), np.float64), np.zeros((1, 65), np.float64)
+    cv2.grabCut(a, mask, None, bgm, fgm, iters, cv2.GC_INIT_WITH_MASK)
+    m = np.where((mask == 1) | (mask == 3), 255, 0).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8))
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m)
+    if n > 1:
+        k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA])); m = np.where(lab == k, 255, 0).astype(np.uint8)
+    m = (ndimage.binary_fill_holes(m > 0) * 255).astype(np.uint8)
+    m = cv2.GaussianBlur(m, (5, 5), 0)
+    return _outline(img, m, outline)
+
+def oval_head(img, cx, cy, rx, ry, outline=14):
+    """Glowa wycieta owalem (jak "duza glowa" w memach), gdy GrabCut nie daje rady."""
+    w, h = img.size
+    m = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(m).ellipse(((cx - rx) * w, (cy - ry) * h, (cx + rx) * w, (cy + ry) * h), fill=255)
+    m = m.filter(ImageFilter.GaussianBlur(2))
+    return _outline(img, np.asarray(m), outline)
+
+def _outline(img, m, outline):
+    import cv2
+    out = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    ker = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (outline * 2 + 1, outline * 2 + 1))
+    ring_a = cv2.dilate(m, ker)
+    out.paste((0, 0, 0, 150), (0, 0), Image.fromarray(cv2.GaussianBlur(ring_a, (0, 0), outline)).point(lambda v: int(v * .6)))
+    out.paste((255, 255, 255, 255), (0, 0), Image.fromarray(ring_a))
+    rgba = img.convert('RGBA'); rgba.putalpha(Image.fromarray(m))
+    out.alpha_composite(rgba)
+    bb = out.getbbox(); res = out.crop(bb); res.info['bbox'] = bb
+    return res
