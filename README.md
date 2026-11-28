@@ -16,3 +16,4 @@ Jedno repozytorium, wiele aplikacji. **Każda aplikacja ma własny folder w gł�
 | Folder | Aplikacja | Typ | Gotowa paczka |
 |---|---|---|---|
 | [`keycopier/`](keycopier/) | Key Copier: odczyt kodu klucza z ekranu telefonu (jak Flipper Zero) | Android (Java) | [`keycopier/KeyCopier.apk`](keycopier/KeyCopier.apk) |
+| [`zegarszachowy/`](zegarszachowy/) | Zegar szachowy: telefon jako zegar na turnieje (Fischer, Bronstein, delay, 90'/40+30') | Android (Java) | [`zegarszachowy/ZegarSzachowy.apk`](zegarszachowy/ZegarSzachowy.apk) |
