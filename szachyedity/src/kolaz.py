@@ -141,3 +141,24 @@ def _outline(img, m, outline):
     out.alpha_composite(rgba)
     bb = out.getbbox(); res = out.crop(bb); res.info['bbox'] = bb
     return res
+
+def sticker_ai(img, model='u2net_human_seg', outline=14, crop=None, cut=()):
+    """Wycinanka postaci modelem rembg (u2net_human_seg): wlosy, rece i tlo z balaganem wychodza dobrze.
+    crop = (x0, y0, x1, y1) w ulamkach, gdy na zdjeciu jest kilka osob; cut = prostokaty (ulamki) do usuniecia
+    (np. czyjas glowa w tle przyklejona do postaci). Model pobiera sie raz (~170 MB)."""
+    import cv2
+    from rembg import remove, new_session
+    from scipy import ndimage
+    if crop:
+        x0, y0, x1, y1 = crop
+        img = img.crop((int(img.width * x0), int(img.height * y0), int(img.width * x1), int(img.height * y1)))
+    a = np.asarray(remove(img.convert('RGB'), session=new_session(model)).getchannel('A'))
+    m = (a > 128).astype(np.uint8)
+    for x0, y0, x1, y1 in cut:
+        m[int(y0 * m.shape[0]):int(y1 * m.shape[0]), int(x0 * m.shape[1]):int(x1 * m.shape[1])] = 0
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m)          # tylko najwieksza czesc (bez plam z tla)
+    if n > 1:
+        k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA])); m = (lab == k).astype(np.uint8)
+    m = ndimage.binary_fill_holes(m).astype(np.uint8)
+    soft = np.where(m > 0, np.maximum(a, 200), 0).astype(np.uint8)  # miekka krawedz z modelu, srodek pelny
+    return _outline(img, cv2.GaussianBlur(soft, (3, 3), 0), outline)

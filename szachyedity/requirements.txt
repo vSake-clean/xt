@@ -3,3 +3,4 @@ pillow
 scipy
 chess
 opencv-python-headless
+rembg[cpu]

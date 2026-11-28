@@ -55,7 +55,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 | `magnus` | `src/edit_magnus.py` | `szachy_edit_magnus.mp4` | Carlsen – Karjakin, dogrywka MS 2016, partia 4: 50. Qh6+!! 1-0, kinowy edit-kolaż ze zdjęciami z meczu (Chess.com), pionowo | 19,2 s |
 | `fischer` | `src/edit_fischer.py` | `szachy_edit_fischer.mp4` | Fischer – Spasski, Reykjavik 1972, partia 6: 38. Rxf6!! … 41. Qf4 1-0, kinowy edit-kolaż bez planszy (zdjęcia na sznurkach, USA kontra ZSRR, zegar, gwiazdy), pionowo | 19,4 s |
 | `tweenslop` | `src/tweenslop.py` | `szachy_tweenslop_magnus.mp4` | styl „tweenslop” jak wzory `wejscie/tweenslop/t1–t6`: spokojny wstęp, drop, co takt inne tło (wzgórza, kalejdoskop, korytarz z szachownicą, plamy oleju, szybkie cięcia), wycinanki Magnusa i figur, wielkie oczy, piksele; własny utwór phonk/funk 130 BPM i własne tła z kodu | 13,4 s |
-| `tweenfischer` | `src/tweenslop.py fischer` | `szachy_tweenslop_fischer.mp4` | ten sam styl z Fischerem (uśmiechnięty, wycinanka GrabCut z podpowiedziami), pierwszy takt na falującej fladze USA, własny utwór 140 BPM d-moll | 12,4 s |
+| `tweenfischer` | `src/tweenslop.py fischer` | `szachy_tweenslop_fischer.mp4` | ten sam styl z Fischerem (cała postać z gazetą i teczką, wycinana modelem u2net_human_seg z rembg) i Spasskim jako drugą postacią, pierwszy takt na falującej fladze USA, własny utwór 140 BPM d-moll | 12,4 s |
 
 ## Narzędzia do nowych filmów
 
@@ -64,7 +64,7 @@ Czcionki (Inter Regular, SemiBold, Bold, ExtraBold, ExtraLight i DejaVu Sans Bol
 
 ## Pozostałe pliki
 
-- `src/kolaz.py`: narzędzia do editów-kolaży (czarno-białe zdjęcie, najazd kamery, wycinanka z białym obrysem przez OpenCV, zegar).
+- `src/kolaz.py`: narzędzia do editów-kolaży (czarno-białe zdjęcie, najazd kamery, zegar, wycinanki z białym obrysem: `sticker_ai` modelem rembg u2net_human_seg – najlepsze, cała postać z włosami i rękami; `sticker`/`sticker_hints` przez GrabCut – tylko przy prostym tle).
 - `src/pobierz_zdjecia.py`: pobiera zdjęcia z artykułów Chess.com o meczu 2016 do `wejscie/zdjecia/` (nie ma ich w repo). To zdjęcia prasowe z prawami autorskimi Chess.com: w filmie jest podpis „Photos: Chess.com”, a za publikację odpowiada autor filmu. Wikimedia Commons (wolne licencje) blokowało pobieranie z tego środowiska (błąd 429).
 
 - `src/assets.py` wycina planszę i figury ze zrzutu (zmienna `PLANSZA` albo `wejscie/plansza.jpg`) i zamalowuje pasek przewijania widoczny na zrzucie.

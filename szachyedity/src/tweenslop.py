@@ -17,10 +17,8 @@ ZDJ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'wejscie', 
 POSTACIE = {   # zdjecie, sposob wyciecia, oczy na ZDJECIU (ulamki), tempo i tonacja wlasnego utworu, tlo pierwszego taktu
     'magnus': dict(plik='magnus_usmiech.jpg', rect=(.03, .06, .78, 1.0), oczy=[(.517, .375), (.671, .373)],
                    bpm=130.0, rdzen=43.65, mel=[349.2, 415.3, 523.3, 466.2, 415.3, 349.2, 311.1, 349.2], tlo0='wzgorza'),
-    'fischer': dict(plik='fischer_usmiech.jpg', oczy=[(.318, .312), (.386, .305)],
-                    fg=[('e', .35, .33, .055, .10), ('r', .14, .66, .42, .99), ('r', .30, .45, .40, .6), ('r', .06, .68, .2, .99)],
-                    bg=[('r', .56, 0, 1, 1), ('r', 0, 0, 1, .10), ('p', [(0, .10), (.25, .10), (.25, .46), (.12, .53), (0, .57)]),
-                        ('r', .47, .13, .56, .55)],
+    'fischer': dict(plik='fischer_idzie.jpg', ai=True, cut=[(.58, .08, .78, .23)], oczy=[(.391, .164), (.469, .164)],
+                    extra=dict(plik='fischer_uscisk.jpg', crop=(.6, 0, 1, 1)),           # Spasski jako druga postac
                     bpm=140.0, rdzen=36.71, mel=[293.7, 349.2, 440.0, 392.0, 349.2, 293.7, 261.6, 293.7], tlo0='flaga'),
 }
 P = POSTACIE[POSTAC]
@@ -150,7 +148,9 @@ with wave.open(WAV, 'wb') as w:
 
 # =============================== 2. POSTACIE ===============================
 im = Image.open(os.path.join(ZDJ, P['plik'])).convert('RGB')
-if 'fg' in P:
+if P.get('ai'):                                       # model u2net_human_seg (rembg): cala postac z wlosami i rekami
+    FIG = kolaz.sticker_ai(im, outline=12, cut=P.get('cut', ()))
+elif 'fg' in P:
     FIG = kolaz.sticker_hints(im, P['fg'], P['bg'], outline=12)
 else:
     x0, y0, x1, y1 = P['rect']
@@ -170,6 +170,10 @@ def piece_sticker(p, size=420, outline=10):           # figura szachowa jako nak
     out.alpha_composite(pim)
     return out
 PIECES = [piece_sticker(p) for p in ('wN', 'bQ', 'wK', 'bN', 'wQ', 'bK')]
+EXTRA = None                                          # druga postac (u Fischera: Spasski)
+if 'extra' in P:
+    EXTRA = kolaz.sticker_ai(Image.open(os.path.join(ZDJ, P['extra']['plik'])).convert('RGB'), outline=12, crop=P['extra']['crop'])
+    EXTRA = EXTRA.resize((560, int(560 * EXTRA.height / EXTRA.width)), Image.LANCZOS)
 
 def bulge(fig, k):                                    # "wielkie oczy": lokalne powiekszenie wokol oczu
     if k <= 0: return fig
@@ -317,7 +321,8 @@ def frame(fi):
         base = flag(t) if P['tlo0'] == 'flaga' else HILLS.copy()
         for j in range(4):
             p = ((t - DROP) * .45 + j * .27) % 1.2 - .1
-            place(base, FIG, W * (1.1 - p * 1.2), H * (.85 - p * .7) + 60 * math.sin(t * 3 + j), .22, .22, (t * 240 + j * 90) % 360, .95)
+            fly = EXTRA if (EXTRA is not None and j % 2 == 1) else FIG
+            place(base, fly, W * (1.1 - p * 1.2), H * (.85 - p * .7) + 60 * math.sin(t * 3 + j), .22 if fly is FIG else .3, .22 if fly is FIG else .3, (t * 240 + j * 90) % 360, .95)
         a = (t - DROP) / (4 * B) * 2 * math.pi
         for lag, al in ((.12, .25), (.06, .45), (0, 1.0)):
             aa = a - lag * 3
@@ -336,6 +341,9 @@ def frame(fi):
             ph = (u + j * .25) % 1
             jump = abs(math.sin(ph * math.pi))
             place(base, pc, W * (.2 + .2 * j), H * .78 - 420 * jump, .7, .7 * (1 + .25 * (1 - jump)), 25 * math.sin(t * 5 + j), flip=(k + j) % 2 == 1)
+        if EXTRA is not None:
+            hop2 = abs(math.sin((u + .5) * math.pi))
+            place(base, EXTRA, W * .8, H * .66 - 220 * hop2, .55, .55 * (1 + .2 * (1 - hop2)), -15 * math.sin(t * 7), flip=k % 2 == 0)
         hop = abs(math.sin(u * math.pi))
         place(base, FIG, W / 2, H * .62 - 260 * hop, .62 * ssx, .62 * ssy, 12 * math.sin(t * 8), flip=k % 2 == 1)
     elif sec == 3:                                    # plamy oleju + wielkie oczy, glitch pikseli

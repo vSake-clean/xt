@@ -18,6 +18,8 @@ python3 -m pip install numpy pillow scipy
 python3 -m pip install --only-binary=:all: chess || python3 -m pip install chess
 # OpenCV tylko do wycinanek ze zdjec w editach-kolazach (src/kolaz.py)
 python3 -m pip install --only-binary=:all: opencv-python-headless
+# rembg (model u2net_human_seg, ok. 170 MB, pobiera sie przy pierwszym uzyciu) - wycinanie postaci ze zdjec
+python3 -m pip install --only-binary=:all: "rembg[cpu]"
 python3 -c "import numpy, PIL, scipy, chess; print('OK: numpy, pillow, scipy, python-chess', chess.__version__)"
 ffmpeg -version | head -1
 echo "Gotowe. Teraz wrzuc filmiki z TikToka do wejscie/ (lista w README.md) i uruchom ./buduj.sh"
